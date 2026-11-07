@@ -1,0 +1,22 @@
+{{- /* Bloc « Voir aussi » : contenus liés explicitement (liens:) puis contenus de mêmes thèmes. */ -}}
+{{ $self := . }}
+{{ $seen := slice .RelPermalink }}
+{{ $out := slice }}
+{{ range .Params.liens }}
+  {{ $path := . | replaceRE `\.md$` "" | replaceRE `/index$` "" }}
+  {{ with site.GetPage (printf "/%s" $path) }}
+    {{ if not (in $seen .RelPermalink) }}{{ $out = $out | append . }}{{ $seen = $seen | append .RelPermalink }}{{ end }}
+  {{ end }}
+{{ end }}
+{{ $rel := where (site.RegularPages.Related $self) "Section" "in" (slice "blog" "book") }}
+{{ range first 6 $rel }}
+  {{ if not (in $seen .RelPermalink) }}{{ $out = $out | append . }}{{ $seen = $seen | append .RelPermalink }}{{ end }}
+{{ end }}
+{{ with first 3 $out }}
+<section class="section related">
+  <div class="wrap">
+    <h2>Voir aussi</h2>
+    <div class="grid">{{ range . }}{{ partial "card-any.html" . }}{{ end }}</div>
+  </div>
+</section>
+{{ end }}

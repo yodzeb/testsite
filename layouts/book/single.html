@@ -1,51 +1,76 @@
 {{ define "main" }}
-<article class="wrap narrow-wide" data-pagefind-body>
-  <header class="page-head">
-    <p class="meta"><a href="{{ "book/" | relURL }}">Book</a>{{ with .Params.categorie }} · {{ . }}{{ end }}</p>
-    <h1>{{ .Title }}</h1>
-    {{ with .Description }}<p class="lead">{{ . }}</p>{{ end }}
-  </header>
-
-  <dl class="facts">
-    {{ with .Params.media }}<div><dt>Publication / client</dt><dd>{{ . }}</dd></div>{{ end }}
-    {{ with .Params.role }}<div><dt>Rôle</dt><dd>{{ . }}</dd></div>{{ end }}
-    <div><dt>Date</dt><dd>{{ .Date | time.Format "January 2006" }}</dd></div>
-  </dl>
-
-  <div class="prose">{{ .Content }}</div>
-
-  {{ with .Params.lien }}
-  <p><a class="btn" href="{{ . }}" rel="noopener" target="_blank">Consulter l'original ↗</a></p>
+{{ $layout := .Params.mise_en_page | default "standard" }}
+<article data-pagefind-body>
+  {{ if and (eq $layout "etude") .Params.image }}
+    {{ $bg := partial "imgurl.html" (dict "page" . "name" .Params.image "width" 2200) }}
+    <header class="etude-hero">
+      <div class="etude-bg" style="background-image:url('{{ $bg }}')"></div>
+      <div class="etude-text wrap">
+        <p class="meta"><a href="{{ "book/" | relURL }}">Book</a>{{ with .Params.categorie }} · {{ . }}{{ end }} {{ partial "format-badge.html" . }}</p>
+        <h1>{{ .Title }}</h1>
+        {{ with .Description }}<p class="lead">{{ . }}</p>{{ end }}
+      </div>
+    </header>
+  {{ else }}
+    <div class="wrap narrow-wide">
+      <header class="page-head">
+        <p class="meta"><a href="{{ "book/" | relURL }}">Book</a>{{ with .Params.categorie }} · {{ . }}{{ end }} {{ partial "format-badge.html" . }}</p>
+        <h1>{{ .Title }}</h1>
+        {{ with .Description }}<p class="lead">{{ . }}</p>{{ end }}
+      </header>
+    </div>
   {{ end }}
 
-  {{ $docs := .Resources.ByType "application" }}
-  {{ with $docs }}
-  <h2>Documents</h2>
-  <ul>
-    {{ range . }}<li><a href="{{ .RelPermalink }}">{{ .Name }}</a></li>{{ end }}
-  </ul>
-  {{ end }}
-
-  {{ $imgs := .Resources.ByType "image" }}
-  {{ with $imgs }}
-  <div class="gallery">
-    {{ range . }}
-      {{ $full := . }}
-      {{ $thumb := . }}
-      {{ if in (slice "jpeg" "png") .MediaType.SubType }}
-        {{ $thumb = .Resize "700x q80" }}
-        {{ if gt .Width 1800 }}{{ $full = .Resize "1800x q85" }}{{ end }}
-      {{ end }}
-      <a href="{{ $full.RelPermalink }}" data-lightbox>
-        <img src="{{ $thumb.RelPermalink }}" alt="{{ .Params.alt | default $.Title }}" loading="lazy">
-      </a>
-    {{ end }}
+  <div class="wrap narrow-wide">
+    <dl class="facts">
+      {{ with .Params.media }}<div><dt>Publication / client</dt><dd>{{ . }}</dd></div>{{ end }}
+      {{ with .Params.role }}<div><dt>Rôle</dt><dd>{{ . }}</dd></div>{{ end }}
+      <div><dt>Date</dt><dd>{{ .Date | time.Format "January 2006" }}</dd></div>
+    </dl>
   </div>
+
+  {{ if in (slice "sections" "etude") $layout }}
+    {{ partial "sections.html" . }}
+    <div class="wrap narrow-wide">
+      {{ with .Content }}<div class="prose">{{ . }}</div>{{ end }}
+  {{ else }}
+    <div class="wrap narrow-wide">
+      {{ partial "media-player.html" . }}
+      <div class="prose">{{ .Content }}</div>
   {{ end }}
 
-  <nav class="pager" aria-label="Réalisations voisines">
-    {{ with .NextInSection }}<a href="{{ .RelPermalink }}">← {{ .Title }}</a>{{ else }}<span></span>{{ end }}
-    {{ with .PrevInSection }}<a href="{{ .RelPermalink }}">{{ .Title }} →</a>{{ else }}<span></span>{{ end }}
-  </nav>
+      {{ with .Params.lien }}
+      <p><a class="btn" href="{{ . }}" rel="noopener" target="_blank">Consulter l'original ↗</a></p>
+      {{ end }}
+
+      {{ with .Resources.ByType "application" }}
+      <h2>Documents</h2>
+      <ul>{{ range . }}<li><a href="{{ .RelPermalink }}">{{ .Name }}</a></li>{{ end }}</ul>
+      {{ end }}
+
+      {{ if not (in (slice "sections" "etude") $layout) }}
+      {{ with .Resources.ByType "image" }}
+      <div class="gallery">
+        {{ range . }}
+          {{ $full := . }}
+          {{ $thumb := . }}
+          {{ if in (slice "jpeg" "png") .MediaType.SubType }}
+            {{ $thumb = .Resize "700x q80" }}
+            {{ if gt .Width 1800 }}{{ $full = .Resize "1800x q85" }}{{ end }}
+          {{ end }}
+          <a href="{{ $full.RelPermalink }}" data-lightbox>
+            <img src="{{ $thumb.RelPermalink }}" alt="{{ .Params.alt | default $.Title }}" loading="lazy">
+          </a>
+        {{ end }}
+      </div>
+      {{ end }}
+      {{ end }}
+
+      <nav class="pager" aria-label="Réalisations voisines">
+        {{ with .NextInSection }}<a href="{{ .RelPermalink }}">← {{ .Title }}</a>{{ else }}<span></span>{{ end }}
+        {{ with .PrevInSection }}<a href="{{ .RelPermalink }}">{{ .Title }} →</a>{{ else }}<span></span>{{ end }}
+      </nav>
+    </div>
 </article>
+{{ partial "related.html" . }}
 {{ end }}

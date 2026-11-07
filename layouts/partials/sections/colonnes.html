@@ -1,0 +1,11 @@
+{{ $s := .s }}
+{{ $url := partial "imgurl.html" (dict "page" .page "name" $s.image "width" 1200) }}
+<section id="{{ .id }}" class="sec sec-colonnes fond-{{ $s.fond | default "clair" }}">
+  <div class="wrap cols2 cote-{{ $s.cote | default "droite" }} reveal">
+    <div class="cols2-text">
+      {{ with $s.titre }}<h2>{{ . }}</h2>{{ end }}
+      {{ with $s.texte }}<div class="prose">{{ . | markdownify }}</div>{{ end }}
+    </div>
+    {{ if $url }}<div class="cols2-img"><img src="{{ $url }}" alt="{{ $s.alt }}" loading="lazy"></div>{{ end }}
+  </div>
+</section>

@@ -1,9 +1,18 @@
 {{ define "main" }}
-<article class="wrap narrow" data-pagefind-body>
-  <header class="page-head">
-    <h1>{{ .Title }}</h1>
-    {{ with .Params.chapo }}<p class="lead">{{ . }}</p>{{ end }}
-  </header>
-  <div class="prose">{{ .Content }}</div>
+<article data-pagefind-body>
+  {{ if not .Params.masquer_titre }}
+  <div class="wrap narrow">
+    <header class="page-head">
+      <h1>{{ .Title }}</h1>
+      {{ with .Params.chapo }}<p class="lead">{{ . }}</p>{{ end }}
+    </header>
+  </div>
+  {{ end }}
+  {{ if eq .Params.mise_en_page "sections" }}
+    {{ partial "sections.html" . }}
+    {{ with .Content }}<div class="wrap narrow prose">{{ . }}</div>{{ end }}
+  {{ else }}
+    <div class="wrap narrow"><div class="prose">{{ .Content }}</div></div>
+  {{ end }}
 </article>
 {{ end }}

@@ -2,7 +2,11 @@
 <header class="site-header">
   <div class="wrap header-inner">
     <a class="brand" href="{{ site.Home.RelPermalink }}">
+      {{ with (site.Params.theme | default dict).logo }}
+      <img class="brand-logo" src="{{ . | relURL }}" alt="{{ site.Title }}">
+      {{ else }}
       <span class="brand-name">{{ site.Title }}</span>
+      {{ end }}
       <span class="brand-tag">{{ site.Params.tagline }}</span>
     </a>
     <button class="nav-toggle" aria-expanded="false" aria-controls="nav" aria-label="Menu">

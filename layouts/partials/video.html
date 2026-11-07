@@ -1,0 +1,12 @@
+{{- /* Lecteur vidéo YouTube « à la demande » : rien n'est chargé avant le clic (RGPD, rapidité). Paramètre : adresse YouTube. */ -}}
+{{- $id := partial "ytid.html" . -}}
+{{- if $id -}}
+<div class="video" data-yt="{{ $id }}">
+  <button type="button" class="video-play" aria-label="Lire la vidéo">
+    <span class="video-icon" aria-hidden="true"></span>
+    <span class="video-text">Lire la vidéo<small>Lecture via YouTube, aucun cookie avant le clic</small></span>
+  </button>
+</div>
+{{- else -}}
+<p class="muted">Adresse de vidéo YouTube non reconnue.</p>
+{{- end -}}

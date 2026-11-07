@@ -1,0 +1,6 @@
+{{- /* Extrait l'identifiant d'une vidéo YouTube depuis son adresse. Retourne "" si non reconnue. */ -}}
+{{- $id := "" -}}
+{{- with findRESubmatch `(?:youtu\.be/|youtube(?:-nocookie)?\.com/(?:watch\?(?:[^#]*&)?v=|embed/|shorts/|live/))([A-Za-z0-9_-]{11})` (printf "%v" .) 1 -}}
+  {{- $id = index (index . 0) 1 -}}
+{{- end -}}
+{{- return $id -}}

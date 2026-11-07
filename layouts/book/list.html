@@ -6,16 +6,30 @@
   </header>
 
   {{ $items := .Pages.ByDate.Reverse }}
-  {{ $cats := slice }}
-  {{ range $items }}{{ with .Params.categorie }}{{ $cats = $cats | append . }}{{ end }}{{ end }}
-  {{ $cats = $cats | uniq | sort }}
-
-  {{ if gt (len $cats) 1 }}
-  <div class="filters" role="group" aria-label="Filtrer par catégorie">
-    <button type="button" class="chip" data-filter="" aria-pressed="true">Tout</button>
-    {{ range $cats }}<button type="button" class="chip" data-filter="{{ . }}" aria-pressed="false">{{ . }}</button>{{ end }}
-  </div>
+  {{ $themes := slice }}
+  {{ $formats := slice }}
+  {{ range $items }}
+    {{ range .Params.themes }}{{ $themes = $themes | append . }}{{ end }}
+    {{ with .Params.format }}{{ $formats = $formats | append . }}{{ end }}
   {{ end }}
+  {{ $themes = $themes | uniq | sort }}
+  {{ $formats = $formats | uniq | sort }}
+  {{ $labels := dict "texte" "Texte" "audio" "Podcast" "video" "Vidéo" }}
+
+  <div class="filter-bar">
+    {{ if $themes }}
+    <div class="filters" role="group" aria-label="Filtrer par thème" data-group="theme">
+      <button type="button" class="chip" data-filter="" aria-pressed="true">Tous les thèmes</button>
+      {{ range $themes }}<button type="button" class="chip" data-filter="{{ . }}" aria-pressed="false">{{ . }}</button>{{ end }}
+    </div>
+    {{ end }}
+    {{ if gt (len $formats) 1 }}
+    <div class="filters" role="group" aria-label="Filtrer par format" data-group="format">
+      <button type="button" class="chip" data-filter="" aria-pressed="true">Tous les formats</button>
+      {{ range $formats }}<button type="button" class="chip" data-filter="{{ . }}" aria-pressed="false">{{ index $labels . | default . }}</button>{{ end }}
+    </div>
+    {{ end }}
+  </div>
 
   <div class="tiles" id="book-grid">
     {{ range $items }}{{ partial "card-book.html" . }}{{ end }}

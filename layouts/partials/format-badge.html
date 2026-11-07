@@ -1,0 +1,1 @@
+{{- with .Params.format }}{{ if eq . "video" }}<span class="fmt fmt-video">Vidéo</span>{{ else if eq . "audio" }}<span class="fmt fmt-audio">Podcast</span>{{ end }}{{ end -}}

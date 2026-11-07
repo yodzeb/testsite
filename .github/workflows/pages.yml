@@ -35,7 +35,16 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Compilation du site
-        run: hugo --minify --baseURL "${{ steps.pages.outputs.base_url }}/"
+        # Adresse du site : la variable de dépôt SITE_URL (Settings > Secrets and variables
+        # > Actions > Variables) si elle existe, sinon l'adresse fournie par GitHub Pages
+        # (qui tient compte du domaine personnalisé déclaré dans Settings > Pages).
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          PAGES_URL: ${{ steps.pages.outputs.base_url }}
+        run: |
+          BASE="${SITE_URL:-$PAGES_URL}"
+          echo "Adresse du site : ${BASE%/}/"
+          hugo --minify --baseURL "${BASE%/}/"
 
       - name: Index de recherche
         run: npx --yes pagefind@1.3.0 --site public

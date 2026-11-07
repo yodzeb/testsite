@@ -1,0 +1,9 @@
+{{ $s := .s }}
+<section id="{{ .id }}" class="sec sec-citation fond-{{ $s.fond | default "accent" }}">
+  <div class="wrap narrow reveal">
+    <blockquote>
+      <p>{{ $s.texte }}</p>
+      {{ with $s.auteur }}<footer>{{ . }}</footer>{{ end }}
+    </blockquote>
+  </div>
+</section>

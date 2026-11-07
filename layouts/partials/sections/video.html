@@ -1,0 +1,21 @@
+{{ $s := .s }}
+{{ if eq $s.mode "fond" }}
+{{ $id := partial "ytid.html" $s.video }}
+<section id="{{ .id }}" class="sec sec-image hauteur-{{ $s.hauteur | default "plein" }} sec-videofond">
+  <div class="video-bg" aria-hidden="true" data-yt="{{ $id }}"></div>
+  {{ if or $s.titre $s.texte }}
+  <div class="sec-overlay"><div class="wrap reveal">
+    {{ with $s.titre }}<h2>{{ . }}</h2>{{ end }}
+    {{ with $s.texte }}<p class="lead">{{ . }}</p>{{ end }}
+  </div></div>
+  {{ end }}
+</section>
+{{ else }}
+<section id="{{ .id }}" class="sec sec-video fond-{{ $s.fond | default "alt" }}">
+  <div class="wrap reveal">
+    {{ with $s.titre }}<h2>{{ . }}</h2>{{ end }}
+    {{ partial "video.html" $s.video }}
+    {{ with $s.texte }}<p class="lead center">{{ . }}</p>{{ end }}
+  </div>
+</section>
+{{ end }}

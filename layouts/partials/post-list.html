@@ -1,7 +1,7 @@
 {{- /* Liste paginée d'articles. Paramètre : le contexte de page (.Pages = articles). */ -}}
 {{ $pager := .Paginate (.Pages.ByDate.Reverse) 9 }}
 <div class="grid">
-  {{ range $pager.Pages }}{{ partial "card-post.html" . }}{{ end }}
+  {{ range $pager.Pages }}{{ partial "card-any.html" . }}{{ end }}
 </div>
 {{ if gt $pager.TotalPages 1 }}
 <nav class="pager" aria-label="Pagination">

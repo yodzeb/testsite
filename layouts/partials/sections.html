@@ -1,0 +1,16 @@
+{{- /* Rendu des sections du défilement progressif : liste "sections:" de l'en-tête de la page. */ -}}
+{{ $page := . }}
+{{ with .Params.sections }}
+<div class="progress" aria-hidden="true"><span></span></div>
+<nav class="dots" aria-label="Sections de la page">
+  {{ range $i, $s := . }}<a href="#s{{ add $i 1 }}" aria-label="Section {{ add $i 1 }}{{ with $s.titre }} : {{ . }}{{ end }}"></a>{{ end }}
+</nav>
+<div class="sections">
+  {{ range $i, $s := . }}
+    {{ $tpl := printf "partials/sections/%s.html" $s.type }}
+    {{ if templates.Exists $tpl }}
+      {{ partial (printf "sections/%s.html" $s.type) (dict "page" $page "s" $s "id" (printf "s%d" (add $i 1))) }}
+    {{ end }}
+  {{ end }}
+</div>
+{{ end }}

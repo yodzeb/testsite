@@ -3,21 +3,32 @@
 #  Modifiez ce fichier pour changer le titre, le menu, les liens.
 # ============================================================
 
-# Adresse du site. Elle est remplacée automatiquement lors du déploiement
-# GitHub Pages ; elle ne sert qu'aux tests locaux.
+# Adresse du site. Elle est remplacée automatiquement lors de la publication
+# (domaine personnalisé déclaré dans GitHub Pages, ou adresse github.io) ;
+# elle ne sert qu'aux tests locaux. Pour forcer l'adresse en ligne, voir README.
 baseURL = "https://yodzeb.github.io/testsite/"
 
-title = "Prénom Nom"
+title = "Henri Mote"
 defaultContentLanguage = "fr"
 languageCode = "fr-FR"
 enableRobotsTXT = true
-# Liens internes (CSS, JS, images, menu) relatifs : le site fonctionne
-# aussi bien sous un sous-dossier (github.io/depot/) que sur un domaine perso.
-relativeURLs = true
 summaryLength = 45
 
 [taxonomies]
   tag = "tags"
+  theme = "themes"
+
+# Contenus « voir aussi » calculés automatiquement (thèmes et tags communs)
+[related]
+  includeNewer = true
+  threshold = 20
+  toLower = true
+  [[related.indices]]
+    name = "themes"
+    weight = 100
+  [[related.indices]]
+    name = "tags"
+    weight = 30
 
 [markup.goldmark.renderer]
   unsafe = true # autorise le HTML dans les fichiers Markdown
@@ -50,10 +61,25 @@ summaryLength = 45
     bluesky = "https://bsky.app/profile/votre-compte"
     instagram = "https://www.instagram.com/votre-compte"
 
+  # Apparence (réglable depuis l'éditeur, écran « Apparence »)
+  [params.theme]
+    preset = "magazine"
+    accent = "#a3262a"
+    accent_text = "#ffffff"
+    bg = "#faf8f4"
+    text = "#1c1b1a"
+    font_titres = "classique"
+    font_texte = "moderne"
+    radius = 4
+    bouton = "plein"
+    mode = "auto"
+    logo = ""
+    favicon = ""
+
 # ------------------------------------------------------------
-#  Menu principal : name = libellé, pageRef = page ciblée,
-#  weight = ordre (le plus petit en premier).
+#  Menu principal (géré par l'éditeur)
 # ------------------------------------------------------------
+
 [[menus.main]]
   name = "Accueil"
   pageRef = "/"

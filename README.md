@@ -66,6 +66,18 @@ Toutes les images du dossier apparaissent dans une galerie avec visionneuse. Les
 
 Dans `hugo.toml`, section `[[menus.main]]` : une entrée par lien (`name`, `pageRef`, `weight` pour l'ordre).
 
+## Vidéos, thèmes, mises en page
+
+- **Thèmes** : `themes: ["randonnée", "culture"]` dans l'en-tête d'un article ou d'une réalisation. Chaque thème a sa page (`/themes/culture/`), et le book se filtre par thème et par format.
+- **Format** : `format: "texte"`, `"video"` ou `"audio"` (étiquette sur les vignettes). `video: "https://www.youtube.com/watch?v=…"` affiche un lecteur lu au clic ; `audio: "fichier.mp3"` (placé dans le dossier de l'article) affiche un lecteur audio. Dans le texte : `{{< video url="https://www.youtube.com/watch?v=…" >}}`.
+- **Voir aussi** : `liens: ["blog/mon-article.md", "book/ma-realisation/index.md"]`, complété automatiquement par les contenus de mêmes thèmes.
+- **Mise en page par sections** : `mise_en_page: sections` (ou `etude` pour une réalisation) et une liste `sections:` (types : `texte`, `image`, `video`, `citation`, `galerie`, `colonnes`). Voir `content/book/enquete-exemple/index.md` pour un exemple complet ; l'éditeur graphique propose un constructeur de blocs.
+- **Apparence** : section `[params.theme]` de `hugo.toml` (couleurs, polices, arrondi, logo…), réglable depuis l'écran « Apparence » de l'éditeur.
+
+## Adresse du site (domaine personnalisé)
+
+Les liens du site utilisent l'adresse fournie par GitHub Pages au moment de la publication, qui tient compte du domaine personnalisé déclaré dans Settings → Pages. Pour la forcer (par exemple si le domaine n'est pas déclaré là), créez la variable de dépôt `SITE_URL` (Settings → Secrets and variables → Actions → Variables) avec une valeur comme `https://www.mon-domaine.fr`, puis relancez la publication.
+
 ## Mise en ligne (une seule fois)
 
 1. Sur GitHub : **Settings → Pages → Build and deployment → Source : GitHub Actions**.

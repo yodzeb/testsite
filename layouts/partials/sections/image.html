@@ -1,0 +1,12 @@
+{{ $s := .s }}
+{{ $url := partial "imgurl.html" (dict "page" .page "name" $s.image "width" 2200) }}
+<section id="{{ .id }}" class="sec sec-image hauteur-{{ $s.hauteur | default "plein" }}">
+  {{ with $s.alt }}<div class="sec-bg" role="img" aria-label="{{ . }}" style="background-image:url('{{ $url }}')"></div>
+  {{ else }}<div class="sec-bg" aria-hidden="true" style="background-image:url('{{ $url }}')"></div>{{ end }}
+  {{ if or $s.titre $s.texte }}
+  <div class="sec-overlay"><div class="wrap reveal">
+    {{ with $s.titre }}<h2>{{ . }}</h2>{{ end }}
+    {{ with $s.texte }}<p class="lead">{{ . }}</p>{{ end }}
+  </div></div>
+  {{ end }}
+</section>

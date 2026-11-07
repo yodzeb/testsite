@@ -1,0 +1,14 @@
+{{- /* URL d'une image (fichier à côté de la page ou chemin static/), réduite à "width" px si trop grande. Paramètres : page, name, width. */ -}}
+{{- $out := "" -}}
+{{- with .name -}}
+  {{- $res := $.page.Resources.GetMatch . -}}
+  {{- if $res -}}
+    {{- if in (slice "jpeg" "png") $res.MediaType.SubType -}}
+      {{- if gt $res.Width $.width -}}{{- $res = $res.Resize (printf "%dx q82" $.width) -}}{{- end -}}
+    {{- end -}}
+    {{- $out = $res.RelPermalink -}}
+  {{- else -}}
+    {{- $out = . | relURL -}}
+  {{- end -}}
+{{- end -}}
+{{- return $out -}}

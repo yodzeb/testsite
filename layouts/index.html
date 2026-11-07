@@ -1,4 +1,8 @@
 {{ define "main" }}
+{{ if eq .Params.mise_en_page "sections" }}
+{{ partial "sections.html" . }}
+{{ with .Content }}<section class="section"><div class="wrap prose">{{ . }}</div></section>{{ end }}
+{{ else }}
 <section class="hero">
   <div class="wrap hero-inner">
     <div class="hero-text">
@@ -23,6 +27,7 @@
 <section class="section">
   <div class="wrap prose">{{ . }}</div>
 </section>
+{{ end }}
 {{ end }}
 
 {{ $posts := where site.RegularPages "Section" "blog" }}

@@ -3,7 +3,7 @@
   <header class="page-head">
     <h1>{{ .Title }}</h1>
     {{ with .Content }}<div class="lead">{{ . }}</div>{{ end }}
-    {{ with site.Taxonomies.tags }}
+    {{ with site.Taxonomies.themes }}
     <ul class="tags">
       {{ range .Alphabetical }}
       <li><a href="{{ .Page.RelPermalink }}">{{ .Page.Title }} <span class="muted">({{ .Count }})</span></a></li>

@@ -44,27 +44,41 @@ F_DESC = {"key": "description", "label": "Résumé (aperçus, moteurs de recherc
 F_IMAGE = {"key": "image", "label": "Image de couverture", "type": "image"}
 F_ALT = {"key": "image_alt", "label": "Texte alternatif de la couverture", "type": "text"}
 F_DRAFT = {"key": "draft", "label": "Brouillon (non publié)", "type": "bool"}
+F_THEMES = {"key": "themes", "label": "Thèmes", "type": "themes"}
+F_FORMAT = {"key": "format", "label": "Format", "type": "select", "default": "texte",
+            "options": [["texte", "Texte"], ["video", "Vidéo"], ["audio", "Podcast (audio)"]]}
+F_VIDEO = {"key": "video", "label": "Vidéo YouTube (adresse)", "type": "url"}
+F_AUDIO = {"key": "audio", "label": "Fichier audio (nom du fichier ajouté à la page, ou adresse)", "type": "text"}
+F_LIENS = {"key": "liens", "label": "Contenus liés (« Voir aussi »)", "type": "pages"}
+F_LAYOUT = {"key": "mise_en_page", "label": "Mise en page", "type": "select", "default": "standard",
+            "options": [["standard", "Standard"], ["sections", "Sections (défilement progressif)"]]}
+F_SECTIONS = {"key": "sections", "label": "Sections", "type": "sections"}
 
 COLLECTIONS = {
     "blog": {
         "label": "Articles",
         "singular": "article",
         "fields": [
-            F_TITLE, F_DATE, F_DESC,
+            F_TITLE, F_DATE, F_DESC, F_THEMES,
             {"key": "tags", "label": "Tags (séparés par des virgules)", "type": "tags"},
-            F_IMAGE, F_ALT, F_DRAFT,
+            F_FORMAT, F_VIDEO, F_AUDIO, F_LIENS,
+            F_IMAGE, F_ALT, F_DRAFT, F_LAYOUT, F_SECTIONS,
         ],
     },
     "book": {
         "label": "Réalisations",
         "singular": "réalisation",
         "fields": [
-            F_TITLE, F_DATE, F_DESC,
+            F_TITLE, F_DATE, F_DESC, F_THEMES,
+            F_FORMAT, F_VIDEO, F_AUDIO,
             {"key": "media", "label": "Média / client", "type": "text"},
             {"key": "role", "label": "Rôle", "type": "text"},
-            {"key": "categorie", "label": "Catégorie (filtre)", "type": "text"},
+            {"key": "categorie", "label": "Catégorie (affichée sur la vignette)", "type": "text"},
             {"key": "lien", "label": "Lien vers l'original", "type": "url"},
+            F_LIENS,
             F_IMAGE, F_ALT, F_DRAFT,
+            dict(F_LAYOUT, options=[["standard", "Standard"], ["sections", "Sections (défilement)"], ["etude", "Étude de cas (grand visuel + sections)"]]),
+            F_SECTIONS,
         ],
     },
     "pages": {
@@ -73,6 +87,7 @@ COLLECTIONS = {
         "fields": [
             F_TITLE,
             {"key": "chapo", "label": "Chapeau (phrase d'introduction)", "type": "text"},
+            F_LAYOUT, F_SECTIONS,
         ],
     },
 }
@@ -140,6 +155,31 @@ def jstr(v: str) -> str:
     return json.dumps(v, ensure_ascii=False)
 
 
+SECTION_TYPES = {"texte", "image", "video", "citation", "galerie", "colonnes"}
+
+
+def clean_sections(v) -> list:
+    """Liste de sections valide : dictionnaires avec un type connu, valeurs vides retirées."""
+    out = []
+    for s in v if isinstance(v, list) else []:
+        if not isinstance(s, dict) or s.get("type") not in SECTION_TYPES:
+            continue
+        item = {}
+        for key, val in s.items():
+            if isinstance(val, list):
+                val = [str(x) for x in val if str(x).strip()]
+            elif val is None or val is False:
+                continue
+            else:
+                val = str(val)
+            if val not in ("", []):
+                item[str(key)] = val
+        # ordre lisible dans le fichier : type, titre, puis le reste
+        order = {"type": 0, "titre": 1}
+        out.append(dict(sorted(item.items(), key=lambda kv: (order.get(kv[0], 2), kv[0]))))
+    return out
+
+
 def dump_front_matter(coll: str, fields: dict, extra: dict) -> str:
     lines = ["---"]
     for f in COLLECTIONS[coll]["fields"]:
@@ -148,13 +188,20 @@ def dump_front_matter(coll: str, fields: dict, extra: dict) -> str:
             if k == "draft" and not v and "draft" not in fields:
                 continue
             lines.append(f"{k}: {'true' if v else 'false'}")
-        elif t == "tags":
+        elif t in ("tags", "themes", "pages"):
             tags = [x.strip() for x in (v or []) if x and x.strip()]
             if tags:
                 lines.append(f"{k}: [{', '.join(jstr(x) for x in tags)}]")
         elif t == "date":
             if v:
                 lines.append(f"{k}: {v}")
+        elif t == "select":
+            if v and v != f.get("default"):
+                lines.append(f"{k}: {jstr(str(v))}")
+        elif t == "sections":
+            secs = clean_sections(v)
+            if secs:
+                lines.append(yaml.safe_dump({k: secs}, allow_unicode=True, sort_keys=False, width=100000).rstrip())
         else:
             if v not in (None, ""):
                 lines.append(f"{k}: {jstr(str(v))}")
@@ -183,8 +230,12 @@ def load_item(p: Path) -> dict:
         v = fm.get(f["key"])
         if f["type"] == "date" and v is not None:
             v = str(v)[:10]
-        elif f["type"] == "tags":
+        elif f["type"] in ("tags", "themes", "pages"):
             v = [str(x) for x in v] if isinstance(v, list) else ([] if v is None else [str(v)])
+        elif f["type"] == "sections":
+            v = clean_sections(v)
+        elif f["type"] == "select":
+            v = str(v) if v else f.get("default", "")
         elif f["type"] == "bool":
             v = bool(v)
         elif v is None:
@@ -416,7 +467,12 @@ def api_media():
 @app.post("/api/preview")
 def api_preview():
     data = request.get_json(force=True)
-    html = markdown.markdown(data.get("body") or "", extensions=["extra", "sane_lists"])
+    body = re.sub(
+        r'\{\{<\s*video\s+(?:url=)?"([^"]*)"\s*>\}\}',
+        r'<div class="vid-ph">▶ Vidéo YouTube : \1</div>',
+        data.get("body") or "",
+    )
+    html = markdown.markdown(body, extensions=["extra", "sane_lists"])
     path = data.get("path", "")
     if path:
         from urllib.parse import quote
@@ -585,6 +641,165 @@ def api_raw_get():
 def api_raw_put():
     HUGO_TOML.write_text((request.get_json(force=True).get("text") or "").replace("\r\n", "\n"), encoding="utf-8")
     return jsonify({"ok": True})
+
+
+# ----------------------------------------------------------------------
+# Thèmes (rubriques) connus
+# ----------------------------------------------------------------------
+DEFAULT_THEMES = ["randonnée", "lifestyle", "culture", "économie"]
+
+
+@app.get("/api/themes")
+def api_themes():
+    found = list(DEFAULT_THEMES)
+    for coll in ("blog", "book"):
+        for f in iter_collection(coll):
+            fm, _ = split_front_matter(f.read_text(encoding="utf-8"))
+            for t in fm.get("themes") or []:
+                if str(t) not in found:
+                    found.append(str(t))
+    return jsonify(found)
+
+
+# ----------------------------------------------------------------------
+# Apparence : section [params.theme] de hugo.toml
+# ----------------------------------------------------------------------
+# Piles de polices : doivent rester identiques à $fonts dans layouts/partials/theme.html
+FONTS = {
+    "classique": ["Classique (serif élégante)", '"Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif'],
+    "didone": ["Contraste (style magazine de mode)", '"Bodoni 72", Didot, "Bodoni MT", "Playfair Display", Georgia, serif'],
+    "moderne": ["Moderne (sans serif système)", 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'],
+    "humaniste": ["Humaniste (sans serif douce)", 'Optima, Candara, "Segoe UI", "Trebuchet MS", "Gill Sans", sans-serif'],
+    "geometrique": ["Géométrique", '"Avenir Next", Avenir, "Century Gothic", "Futura", "Segoe UI", sans-serif'],
+    "machine": ["Machine à écrire", 'ui-monospace, Menlo, Consolas, "Courier New", monospace'],
+}
+PRESETS = {
+    "magazine": {"label": "Magazine", "accent": "#a3262a", "bg": "#faf8f4", "text": "#1c1b1a",
+                 "font_titres": "classique", "font_texte": "moderne", "radius": 4, "bouton": "plein", "mode": "auto"},
+    "minimal": {"label": "Minimal", "accent": "#1f4fd8", "bg": "#ffffff", "text": "#111111",
+                "font_titres": "moderne", "font_texte": "moderne", "radius": 2, "bouton": "contour", "mode": "auto"},
+    "chaleureux": {"label": "Chaleureux", "accent": "#c2562b", "bg": "#fbf5ee", "text": "#2b211b",
+                   "font_titres": "classique", "font_texte": "humaniste", "radius": 10, "bouton": "plein", "mode": "auto"},
+    "editorial": {"label": "Éditorial contrasté", "accent": "#0f766e", "bg": "#f4f7f6", "text": "#10231f",
+                  "font_titres": "didone", "font_texte": "geometrique", "radius": 0, "bouton": "plein", "mode": "auto"},
+}
+THEME_KEYS = ["preset", "accent", "accent_text", "bg", "text", "font_titres", "font_texte",
+              "radius", "bouton", "mode", "logo", "favicon"]
+COLOR_RE = re.compile(r"^#[0-9a-fA-F]{3,8}$")
+STATIC = ROOT / "static"
+
+
+def section_bounds(lines, name):
+    start = None
+    for i, ln in enumerate(lines):
+        h = HEADER_RE.match(ln)
+        if h and h.group(1) == "[" and h.group(2) == name:
+            start = i
+        elif h and start is not None:
+            return start, i
+    return (start, len(lines)) if start is not None else (None, None)
+
+
+@app.get("/api/theme")
+def api_theme_get():
+    lines = read_toml_lines()
+    s, e = section_bounds(lines, "params.theme")
+    values = {}
+    if s is not None:
+        for ln in lines[s + 1:e]:
+            m = re.match(r'^\s*([A-Za-z_]+)\s*=\s*("(?:[^"\\]|\\.)*"|[^\s#]+)', ln)
+            if m:
+                raw = m.group(2).strip()
+                try:
+                    values[m.group(1)] = json.loads(raw)
+                except ValueError:
+                    values[m.group(1)] = raw.strip('"')
+    return jsonify({
+        "values": values,
+        "fonts": {k: {"label": v[0], "stack": v[1]} for k, v in FONTS.items()},
+        "presets": PRESETS,
+    })
+
+
+@app.put("/api/theme")
+def api_theme_put():
+    data = request.get_json(force=True).get("values", {})
+    block = ["  # Apparence (réglable depuis l'éditeur, écran « Apparence »)", "  [params.theme]"]
+    for k in THEME_KEYS:
+        v = data.get(k)
+        if v is None:
+            continue
+        if k in ("accent", "accent_text", "bg", "text") and not COLOR_RE.match(str(v)):
+            return err(f"Couleur invalide pour « {k} » : {v}")
+        if k in ("font_titres", "font_texte") and v not in FONTS:
+            return err(f"Police inconnue : {v}")
+        if k == "mode" and v not in ("auto", "clair", "sombre"):
+            return err("Mode invalide.")
+        if k == "bouton" and v not in ("plein", "contour"):
+            return err("Style de bouton invalide.")
+        if k == "radius":
+            block.append(f"    radius = {max(0, min(40, int(v)))}")
+        else:
+            block.append(f"    {k} = {jstr(str(v))}")
+    lines = read_toml_lines()
+    s, e = section_bounds(lines, "params.theme")
+    if s is None:
+        # juste avant le commentaire d'en-tête du menu s'il existe, sinon en fin de fichier
+        idx = next((i for i, ln in enumerate(lines) if re.match(r"^\s*\[\[menus\.main\]\]", ln)), len(lines))
+        while idx > 0 and lines[idx - 1].strip().startswith("#"):
+            idx -= 1
+        lines[idx:idx] = block + [""]
+    else:
+        # conserve les commentaires qui précèdent la section suivante (ex. en-tête du menu)
+        while e > s + 1 and (not lines[e - 1].strip() or lines[e - 1].strip().startswith("#")):
+            e -= 1
+        # remplace aussi le commentaire d'en-tête de la section elle-même
+        while s > 0 and lines[s - 1].strip().startswith("#"):
+            s -= 1
+        lines[s:e] = block
+    HUGO_TOML.write_text("\n".join(lines).rstrip("\n") + "\n", encoding="utf-8")
+    return jsonify({"ok": True})
+
+
+@app.post("/api/brand")
+def api_brand_upload():
+    """Logo ou icône du site : enregistré dans static/ (envoyé avec le site)."""
+    kind = request.form.get("kind")
+    file = request.files.get("file")
+    if kind not in ("logo", "favicon") or not file:
+        return err("Fichier ou type manquant.")
+    ext = Path(file.filename or "").suffix.lower()
+    allowed = {".png", ".svg", ".jpg", ".jpeg", ".webp"} if kind == "logo" else {".png", ".svg", ".ico"}
+    if ext not in allowed:
+        return err("Format non pris en charge : " + ", ".join(sorted(allowed)))
+    raw = file.read()
+    if ext in (".png", ".jpg", ".jpeg", ".webp"):
+        img = ImageOps.exif_transpose(Image.open(io.BytesIO(raw)))
+        img.thumbnail((700, 300) if kind == "logo" else (256, 256))
+        out = io.BytesIO()
+        if ext == ".png" or img.mode in ("RGBA", "LA", "P"):
+            img.save(out, "PNG", optimize=True)
+            ext = ".png"
+        else:
+            img.convert("RGB").save(out, "JPEG", quality=90)
+            ext = ".jpg"
+        raw = out.getvalue()
+    folder = STATIC / "images" if kind == "logo" else STATIC
+    folder.mkdir(parents=True, exist_ok=True)
+    for old in folder.glob(f"{'logo' if kind == 'logo' else 'favicon-perso'}.*"):
+        old.unlink()
+    name = f"{'logo' if kind == 'logo' else 'favicon-perso'}{ext}"
+    (folder / name).write_bytes(raw)
+    return jsonify({"path": ("images/" if kind == "logo" else "") + name})
+
+
+@app.get("/api/static")
+def api_static():
+    rel = request.args.get("path", "")
+    p = (STATIC / rel).resolve()
+    if STATIC.resolve() not in p.parents or not p.is_file():
+        abort(404)
+    return send_from_directory(p.parent, p.name)
 
 
 # ----------------------------------------------------------------------

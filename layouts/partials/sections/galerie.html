@@ -1,0 +1,14 @@
+{{ $s := .s }}
+{{ $page := .page }}
+<section id="{{ .id }}" class="sec sec-galerie fond-{{ $s.fond | default "clair" }}">
+  <div class="wrap reveal">
+    {{ with $s.titre }}<h2>{{ . }}</h2>{{ end }}
+    <div class="gallery">
+      {{ range $s.images }}
+        {{ $thumb := partial "imgurl.html" (dict "page" $page "name" . "width" 700) }}
+        {{ $full := partial "imgurl.html" (dict "page" $page "name" . "width" 1800) }}
+        <a href="{{ $full }}" data-lightbox><img src="{{ $thumb }}" alt="" loading="lazy"></a>
+      {{ end }}
+    </div>
+  </div>
+</section>

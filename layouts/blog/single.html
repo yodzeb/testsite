@@ -1,33 +1,51 @@
 {{ define "main" }}
-<article class="wrap narrow" data-pagefind-body>
-  <header class="page-head">
-    <p class="meta">
-      <a href="{{ "blog/" | relURL }}">Blog</a> ·
-      <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date | time.Format ":date_long" }}</time> ·
-      {{ .ReadingTime }} min de lecture
-    </p>
-    <h1>{{ .Title }}</h1>
-    {{ with .Description }}<p class="lead">{{ . }}</p>{{ end }}
-  </header>
+{{ $layout := .Params.mise_en_page | default "standard" }}
+<article data-pagefind-body>
+  <div class="wrap narrow">
+    <header class="page-head">
+      <p class="meta">
+        <a href="{{ "blog/" | relURL }}">Blog</a> ·
+        <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date | time.Format ":date_long" }}</time> ·
+        {{ .ReadingTime }} min de lecture {{ partial "format-badge.html" . }}
+      </p>
+      <h1>{{ .Title }}</h1>
+      {{ with .Description }}<p class="lead">{{ . }}</p>{{ end }}
+    </header>
+  </div>
 
-  {{ if .Params.image }}
-  <figure class="cover">
-    {{ partial "cover.html" (dict "page" . "spec" "1200x630 q85 Center") }}
-    {{ with .Params.image_legende }}<figcaption>{{ . }}</figcaption>{{ end }}
-  </figure>
+  {{ if eq $layout "sections" }}
+    {{ partial "sections.html" . }}
+    {{ with .Content }}<div class="wrap narrow prose">{{ . }}</div>{{ end }}
+  {{ else }}
+    <div class="wrap narrow">
+      {{ partial "media-player.html" . }}
+      {{ if and .Params.image (not .Params.video) }}
+      <figure class="cover">
+        {{ partial "cover.html" (dict "page" . "spec" "1200x630 q85 Center") }}
+        {{ with .Params.image_legende }}<figcaption>{{ . }}</figcaption>{{ end }}
+      </figure>
+      {{ end }}
+      <div class="prose">{{ .Content }}</div>
+    </div>
   {{ end }}
 
-  <div class="prose">{{ .Content }}</div>
+  <div class="wrap narrow">
+    {{ with .GetTerms "themes" }}
+    <ul class="tags">
+      {{ range . }}<li><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></li>{{ end }}
+    </ul>
+    {{ end }}
+    {{ with .GetTerms "tags" }}
+    <ul class="tags tags-sec">
+      {{ range . }}<li><a href="{{ .RelPermalink }}">#{{ .LinkTitle }}</a></li>{{ end }}
+    </ul>
+    {{ end }}
 
-  {{ with .GetTerms "tags" }}
-  <ul class="tags">
-    {{ range . }}<li><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></li>{{ end }}
-  </ul>
-  {{ end }}
-
-  <nav class="pager" aria-label="Articles voisins">
-    {{ with .NextInSection }}<a href="{{ .RelPermalink }}">← {{ .Title }}</a>{{ else }}<span></span>{{ end }}
-    {{ with .PrevInSection }}<a href="{{ .RelPermalink }}">{{ .Title }} →</a>{{ else }}<span></span>{{ end }}
-  </nav>
+    <nav class="pager" aria-label="Articles voisins">
+      {{ with .NextInSection }}<a href="{{ .RelPermalink }}">← {{ .Title }}</a>{{ else }}<span></span>{{ end }}
+      {{ with .PrevInSection }}<a href="{{ .RelPermalink }}">{{ .Title }} →</a>{{ else }}<span></span>{{ end }}
+    </nav>
+  </div>
 </article>
+{{ partial "related.html" . }}
 {{ end }}

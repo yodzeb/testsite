@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="fr">
+{{ $mode := (site.Params.theme | default dict).mode | default "auto" }}
+<html lang="fr"{{ if eq $mode "clair" }} data-theme="light"{{ else if eq $mode "sombre" }} data-theme="dark"{{ end }}>
 <head>
   {{ partial "head.html" . }}
 </head>

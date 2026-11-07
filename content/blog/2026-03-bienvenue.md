@@ -3,6 +3,7 @@ title: "Bienvenue sur mon nouveau site"
 date: 2026-03-12
 description: "Pourquoi ce site, et ce que vous y trouverez : articles, book et coulisses du métier."
 tags: ["site", "métier"]
+themes: ["culture"]
 draft: false
 ---
 

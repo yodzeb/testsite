@@ -1,0 +1,7 @@
+{{- /* Vidéo YouTube et/ou lecteur audio déclarés dans l'en-tête de la page (video: / audio:). */ -}}
+{{ with .Params.video }}<div class="media">{{ partial "video.html" . }}</div>{{ end }}
+{{ with .Params.audio }}
+  {{ $src := . }}
+  {{ with $.Resources.GetMatch . }}{{ $src = .RelPermalink }}{{ else }}{{ if not (hasPrefix $src "http") }}{{ $src = $src | relURL }}{{ end }}{{ end }}
+  <div class="media"><audio controls preload="none" src="{{ $src }}">Votre navigateur ne sait pas lire ce fichier audio.</audio></div>
+{{ end }}

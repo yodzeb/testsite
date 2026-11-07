@@ -1,0 +1,7 @@
+{{ $s := .s }}
+<section id="{{ .id }}" class="sec sec-texte fond-{{ $s.fond | default "clair" }}">
+  <div class="wrap narrow reveal">
+    {{ with $s.titre }}<h2>{{ . }}</h2>{{ end }}
+    {{ with $s.texte }}<div class="prose">{{ . | markdownify }}</div>{{ end }}
+  </div>
+</section>

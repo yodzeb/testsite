@@ -66,3 +66,27 @@ summary { cursor:pointer; font-weight:600; }
 #toast { position:fixed; bottom:1.25rem; left:50%; transform:translateX(-50%); background:#1f1d1b; color:#fff; padding:.6rem 1.2rem; border-radius:8px; opacity:0; pointer-events:none; transition:opacity .25s; z-index:50; }
 #toast.show { opacity:1; }
 #toast.bad { background:#b3261e; }
+
+/* Cases à cocher, sections, apparence */
+.checks { display: grid; gap: .15rem; margin-bottom: .4rem; }
+label.check.small { font-weight: 400; font-size: .9rem; margin: 0; }
+.scroll { max-height: 170px; overflow: auto; border: 1px solid var(--line); border-radius: 6px; padding: .4rem .6rem; background: #fff; }
+.builder .bar { margin-top: .75rem; }
+.block { border: 1px solid var(--line); border-radius: 8px; padding: .75rem 1rem 0; margin-bottom: .75rem; background: #fcfbf8; }
+.block-head { display: flex; gap: .3rem; align-items: center; margin-bottom: .6rem; }
+.block-head .grow { flex: 1; }
+.block-head button { border: 1px solid var(--line); background: #fff; border-radius: 4px; padding: .1rem .5rem; cursor: pointer; }
+.imgpick { display: flex; gap: .4rem; margin-top: .25rem; }
+.imgpick select { margin: 0 !important; }
+.vid-ph { background: #222; color: #fff; padding: 2rem 1rem; text-align: center; border-radius: 6px; margin: 1rem 0; font: 14px system-ui; }
+input[type=color] { width: 100%; height: 2.4rem; padding: .15rem; }
+input[type=range] { width: 100%; }
+.tp { border: 1px solid var(--line); border-radius: 8px; padding: 1.25rem; background: var(--bg); color: var(--text); font-family: var(--sans); }
+.tp-head { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid color-mix(in srgb, var(--text) 16%, var(--bg)); padding-bottom: .6rem; margin-bottom: 1rem; }
+.tp-nav { font-size: .8rem; opacity: .7; white-space: pre; }
+.tp h4 { font: 700 1.5rem/1.2 var(--serif); margin: 0 0 .5rem; }
+.tp p { margin: 0 0 .8rem; }
+.tp a { color: var(--accent); text-decoration: underline; }
+.tp-btn { display: inline-block; background: var(--accent); color: var(--accent-text); padding: .45rem 1rem; border-radius: var(--radius); border: 2px solid var(--accent); font-weight: 600; }
+.tp.outline .tp-btn { background: transparent; color: var(--accent); }
+.tp-tile { display: inline-block; padding: .45rem 1rem; border-radius: var(--radius); background: color-mix(in srgb, var(--text) 8%, var(--bg)); }
