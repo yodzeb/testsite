@@ -1,7 +1,7 @@
 ---
 title: "Mon gros article"
 date: 2026-11-07
-draft: true
+draft: false
 ---
 
 ## Mon titre 2222
