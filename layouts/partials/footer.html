@@ -1,0 +1,19 @@
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <div>
+      <strong>{{ site.Title }}</strong><br>
+      <span class="muted">{{ site.Params.tagline }}</span>
+    </div>
+    <ul class="social">
+      {{ with site.Params.social.linkedin }}<li><a href="{{ . }}" rel="me noopener">LinkedIn</a></li>{{ end }}
+      {{ with site.Params.social.mastodon }}<li><a href="{{ . }}" rel="me noopener">Mastodon</a></li>{{ end }}
+      {{ with site.Params.social.bluesky }}<li><a href="{{ . }}" rel="me noopener">Bluesky</a></li>{{ end }}
+      {{ with site.Params.social.instagram }}<li><a href="{{ . }}" rel="me noopener">Instagram</a></li>{{ end }}
+      {{ with site.Home.OutputFormats.Get "rss" }}<li><a href="{{ .RelPermalink }}">Flux RSS</a></li>{{ end }}
+    </ul>
+    <p class="muted small">
+      © {{ now.Year }} {{ site.Title }} ·
+      <a href="{{ "mentions-legales/" | relURL }}">Mentions légales</a>
+    </p>
+  </div>
+</footer>

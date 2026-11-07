@@ -1,0 +1,51 @@
+{{ define "main" }}
+<article class="wrap narrow-wide" data-pagefind-body>
+  <header class="page-head">
+    <p class="meta"><a href="{{ "book/" | relURL }}">Book</a>{{ with .Params.categorie }} · {{ . }}{{ end }}</p>
+    <h1>{{ .Title }}</h1>
+    {{ with .Description }}<p class="lead">{{ . }}</p>{{ end }}
+  </header>
+
+  <dl class="facts">
+    {{ with .Params.media }}<div><dt>Publication / client</dt><dd>{{ . }}</dd></div>{{ end }}
+    {{ with .Params.role }}<div><dt>Rôle</dt><dd>{{ . }}</dd></div>{{ end }}
+    <div><dt>Date</dt><dd>{{ .Date | time.Format "January 2006" }}</dd></div>
+  </dl>
+
+  <div class="prose">{{ .Content }}</div>
+
+  {{ with .Params.lien }}
+  <p><a class="btn" href="{{ . }}" rel="noopener" target="_blank">Consulter l'original ↗</a></p>
+  {{ end }}
+
+  {{ $docs := .Resources.ByType "application" }}
+  {{ with $docs }}
+  <h2>Documents</h2>
+  <ul>
+    {{ range . }}<li><a href="{{ .RelPermalink }}">{{ .Name }}</a></li>{{ end }}
+  </ul>
+  {{ end }}
+
+  {{ $imgs := .Resources.ByType "image" }}
+  {{ with $imgs }}
+  <div class="gallery">
+    {{ range . }}
+      {{ $full := . }}
+      {{ $thumb := . }}
+      {{ if in (slice "jpeg" "png") .MediaType.SubType }}
+        {{ $thumb = .Resize "700x q80" }}
+        {{ if gt .Width 1800 }}{{ $full = .Resize "1800x q85" }}{{ end }}
+      {{ end }}
+      <a href="{{ $full.RelPermalink }}" data-lightbox>
+        <img src="{{ $thumb.RelPermalink }}" alt="{{ .Params.alt | default $.Title }}" loading="lazy">
+      </a>
+    {{ end }}
+  </div>
+  {{ end }}
+
+  <nav class="pager" aria-label="Réalisations voisines">
+    {{ with .NextInSection }}<a href="{{ .RelPermalink }}">← {{ .Title }}</a>{{ else }}<span></span>{{ end }}
+    {{ with .PrevInSection }}<a href="{{ .RelPermalink }}">{{ .Title }} →</a>{{ else }}<span></span>{{ end }}
+  </nav>
+</article>
+{{ end }}

@@ -1,0 +1,24 @@
+{{ define "main" }}
+<div class="wrap">
+  <header class="page-head">
+    <h1>{{ .Title }}</h1>
+    {{ with .Content }}<div class="lead">{{ . }}</div>{{ end }}
+  </header>
+
+  {{ $items := .Pages.ByDate.Reverse }}
+  {{ $cats := slice }}
+  {{ range $items }}{{ with .Params.categorie }}{{ $cats = $cats | append . }}{{ end }}{{ end }}
+  {{ $cats = $cats | uniq | sort }}
+
+  {{ if gt (len $cats) 1 }}
+  <div class="filters" role="group" aria-label="Filtrer par catégorie">
+    <button type="button" class="chip" data-filter="" aria-pressed="true">Tout</button>
+    {{ range $cats }}<button type="button" class="chip" data-filter="{{ . }}" aria-pressed="false">{{ . }}</button>{{ end }}
+  </div>
+  {{ end }}
+
+  <div class="tiles" id="book-grid">
+    {{ range $items }}{{ partial "card-book.html" . }}{{ end }}
+  </div>
+</div>
+{{ end }}

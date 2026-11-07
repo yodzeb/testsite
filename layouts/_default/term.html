@@ -1,0 +1,10 @@
+{{ define "main" }}
+<div class="wrap">
+  <header class="page-head">
+    <p class="eyebrow">Thème</p>
+    <h1>{{ .Title }}</h1>
+    <p><a href="{{ "blog/" | relURL }}">← Tous les articles</a></p>
+  </header>
+  {{ partial "post-list.html" . }}
+</div>
+{{ end }}

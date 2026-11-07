@@ -1,0 +1,13 @@
+{{ define "main" }}
+<article class="wrap narrow">
+  <header class="page-head">
+    <h1>{{ .Title }}</h1>
+  </header>
+  <link href="{{ "pagefind/pagefind-ui.css" | relURL }}" rel="stylesheet">
+  <div id="recherche"></div>
+  <p class="muted small" id="recherche-indispo" hidden>
+    La recherche est générée lors de la publication du site ; elle n'est pas disponible en prévisualisation locale.
+  </p>
+  <script src="{{ "pagefind/pagefind-ui.js" | relURL }}" onload="new PagefindUI({ element: '#recherche', showSubResults: true, resetStyles: false })" onerror="document.getElementById('recherche-indispo').hidden = false"></script>
+</article>
+{{ end }}

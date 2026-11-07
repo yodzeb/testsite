@@ -1,0 +1,26 @@
+{{ $cur := . }}
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="{{ site.Home.RelPermalink }}">
+      <span class="brand-name">{{ site.Title }}</span>
+      <span class="brand-tag">{{ site.Params.tagline }}</span>
+    </a>
+    <button class="nav-toggle" aria-expanded="false" aria-controls="nav" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <nav id="nav" class="nav" aria-label="Navigation principale">
+      {{ range site.Menus.main }}
+        {{ $active := false }}
+        {{ with .Page }}
+          {{ if .IsHome }}
+            {{ $active = $cur.IsHome }}
+          {{ else }}
+            {{ $active = or (eq $cur.RelPermalink .RelPermalink) (and $cur.Section (eq $cur.Section .Section)) }}
+          {{ end }}
+        {{ end }}
+        <a href="{{ .URL }}"{{ if $active }} aria-current="page"{{ end }}>{{ .Name }}</a>
+      {{ end }}
+      <a class="nav-search" href="{{ "recherche/" | relURL }}" aria-label="Rechercher">Rechercher</a>
+    </nav>
+  </div>
+</header>

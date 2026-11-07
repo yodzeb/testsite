@@ -1,0 +1,65 @@
+{{ define "main" }}
+<section class="hero">
+  <div class="wrap hero-inner">
+    <div class="hero-text">
+      <p class="eyebrow">{{ .Params.eyebrow | default site.Params.tagline }}</p>
+      <h1>{{ .Params.hero_title | default .Title }}</h1>
+      {{ with .Params.hero_subtitle }}<p class="lead">{{ . }}</p>{{ end }}
+      <p class="hero-actions">
+        {{ range .Params.boutons }}
+          <a class="btn{{ if .secondaire }} btn-ghost{{ end }}" href="{{ .lien | relLangURL }}">{{ .texte }}</a>
+        {{ end }}
+      </p>
+    </div>
+    {{ if .Params.image }}
+    <div class="hero-img">
+      {{ partial "cover.html" (dict "page" . "spec" "700x860 q85 Center") }}
+    </div>
+    {{ end }}
+  </div>
+</section>
+
+{{ with .Content }}
+<section class="section">
+  <div class="wrap prose">{{ . }}</div>
+</section>
+{{ end }}
+
+{{ $posts := where site.RegularPages "Section" "blog" }}
+{{ with $posts.ByDate.Reverse | first 3 }}
+<section class="section section-alt">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Derniers articles</h2>
+      <a href="{{ "blog/" | relURL }}">Tous les articles →</a>
+    </div>
+    <div class="grid">
+      {{ range . }}{{ partial "card-post.html" . }}{{ end }}
+    </div>
+  </div>
+</section>
+{{ end }}
+
+{{ $book := where site.RegularPages "Section" "book" }}
+{{ with $book.ByDate.Reverse | first 6 }}
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Sélection du book</h2>
+      <a href="{{ "book/" | relURL }}">Voir tout le book →</a>
+    </div>
+    <div class="tiles">
+      {{ range . }}{{ partial "card-book.html" . }}{{ end }}
+    </div>
+  </div>
+</section>
+{{ end }}
+
+<section class="section cta">
+  <div class="wrap center">
+    <h2>{{ .Params.cta_titre | default "Un sujet, une commande, une idée ?" }}</h2>
+    <p class="lead">{{ .Params.cta_texte | default "Parlons-en." }}</p>
+    <a class="btn" href="{{ "contact/" | relURL }}">Me contacter</a>
+  </div>
+</section>
+{{ end }}

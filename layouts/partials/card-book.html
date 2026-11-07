@@ -1,0 +1,15 @@
+<a class="tile" href="{{ .RelPermalink }}" data-cat="{{ .Params.categorie }}">
+  <div class="tile-img">
+    {{ if .Params.image }}
+      {{ partial "cover.html" (dict "page" . "spec" "700x700 q80 Center") }}
+    {{ else }}
+      <span class="tile-ph">{{ substr .Title 0 1 }}</span>
+    {{ end }}
+  </div>
+  <div class="tile-body">
+    <h3>{{ .Title }}</h3>
+    <p class="meta">
+      {{ with .Params.media }}{{ . }}{{ end }}{{ with .Params.categorie }}{{ if $.Params.media }} · {{ end }}{{ . }}{{ end }}
+    </p>
+  </div>
+</a>

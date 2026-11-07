@@ -1,0 +1,14 @@
+<article class="card">
+  {{ if .Params.image }}
+  <a class="card-img" href="{{ .RelPermalink }}" tabindex="-1" aria-hidden="true">
+    {{ partial "cover.html" (dict "page" . "spec" "800x500 q80 Center") }}
+  </a>
+  {{ end }}
+  <div class="card-body">
+    <p class="meta">
+      <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date | time.Format ":date_long" }}</time>
+    </p>
+    <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+    <p>{{ .Description | default .Summary | plainify | truncate 200 }}</p>
+  </div>
+</article>

@@ -1,0 +1,33 @@
+{{ define "main" }}
+<article class="wrap narrow" data-pagefind-body>
+  <header class="page-head">
+    <p class="meta">
+      <a href="{{ "blog/" | relURL }}">Blog</a> ·
+      <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date | time.Format ":date_long" }}</time> ·
+      {{ .ReadingTime }} min de lecture
+    </p>
+    <h1>{{ .Title }}</h1>
+    {{ with .Description }}<p class="lead">{{ . }}</p>{{ end }}
+  </header>
+
+  {{ if .Params.image }}
+  <figure class="cover">
+    {{ partial "cover.html" (dict "page" . "spec" "1200x630 q85 Center") }}
+    {{ with .Params.image_legende }}<figcaption>{{ . }}</figcaption>{{ end }}
+  </figure>
+  {{ end }}
+
+  <div class="prose">{{ .Content }}</div>
+
+  {{ with .GetTerms "tags" }}
+  <ul class="tags">
+    {{ range . }}<li><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></li>{{ end }}
+  </ul>
+  {{ end }}
+
+  <nav class="pager" aria-label="Articles voisins">
+    {{ with .NextInSection }}<a href="{{ .RelPermalink }}">← {{ .Title }}</a>{{ else }}<span></span>{{ end }}
+    {{ with .PrevInSection }}<a href="{{ .RelPermalink }}">{{ .Title }} →</a>{{ else }}<span></span>{{ end }}
+  </nav>
+</article>
+{{ end }}

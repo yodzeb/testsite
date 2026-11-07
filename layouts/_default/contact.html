@@ -1,0 +1,28 @@
+{{ define "main" }}
+<article class="wrap narrow">
+  <header class="page-head">
+    <h1>{{ .Title }}</h1>
+  </header>
+  <div class="prose">{{ .Content }}</div>
+
+  {{ with site.Params.formspree }}
+  <form class="form" action="{{ . }}" method="POST">
+    <label>Nom
+      <input type="text" name="nom" required autocomplete="name">
+    </label>
+    <label>Adresse e-mail
+      <input type="email" name="email" required autocomplete="email">
+    </label>
+    <label>Message
+      <textarea name="message" rows="7" required></textarea>
+    </label>
+    <input type="text" name="_gotcha" tabindex="-1" autocomplete="off" class="hp" aria-hidden="true">
+    <button class="btn" type="submit">Envoyer</button>
+  </form>
+  {{ else }}
+  <p>
+    <a class="btn" href="mailto:{{ site.Params.email }}">{{ site.Params.email }}</a>
+  </p>
+  {{ end }}
+</article>
+{{ end }}

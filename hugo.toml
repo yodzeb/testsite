@@ -1,0 +1,77 @@
+# ============================================================
+#  CONFIGURATION DU SITE
+#  Modifiez ce fichier pour changer le titre, le menu, les liens.
+# ============================================================
+
+# Adresse du site. Elle est remplacée automatiquement lors du déploiement
+# GitHub Pages ; elle ne sert qu'aux tests locaux.
+baseURL = "https://yodzeb.github.io/testsite/"
+
+title = "Prénom Nom"
+defaultContentLanguage = "fr"
+languageCode = "fr-FR"
+enableRobotsTXT = true
+summaryLength = 45
+
+[taxonomies]
+  tag = "tags"
+
+[markup.goldmark.renderer]
+  unsafe = true # autorise le HTML dans les fichiers Markdown
+
+[outputs]
+  home = ["html", "rss"]
+  section = ["html"]
+  taxonomy = ["html"]
+  term = ["html"]
+
+# ------------------------------------------------------------
+#  Informations générales
+# ------------------------------------------------------------
+[params]
+  tagline = "Journaliste indépendant·e"
+  description = "Journaliste pigiste : reportages, enquêtes et portraits. Retrouvez mes articles et mon book."
+  email = "contact@exemple.fr"
+  # Pour activer le formulaire de contact : créez un formulaire sur
+  # https://formspree.io et collez ici son adresse, par exemple
+  # "https://formspree.io/f/abcdwxyz". Laissé vide, la page Contact
+  # affiche simplement un lien e-mail.
+  formspree = ""
+  # Image par défaut pour les partages sur les réseaux (dans static/)
+  ogImage = "/images/partage.svg"
+
+  # Réseaux sociaux : supprimez une ligne pour la masquer.
+  [params.social]
+    linkedin = "https://www.linkedin.com/in/votre-profil"
+    mastodon = "https://mastodon.social/@votre-compte"
+    bluesky = "https://bsky.app/profile/votre-compte"
+    instagram = "https://www.instagram.com/votre-compte"
+
+# ------------------------------------------------------------
+#  Menu principal : name = libellé, pageRef = page ciblée,
+#  weight = ordre (le plus petit en premier).
+# ------------------------------------------------------------
+[[menus.main]]
+  name = "Accueil"
+  pageRef = "/"
+  weight = 10
+
+[[menus.main]]
+  name = "Blog"
+  pageRef = "/blog"
+  weight = 20
+
+[[menus.main]]
+  name = "Book"
+  pageRef = "/book"
+  weight = 30
+
+[[menus.main]]
+  name = "À propos"
+  pageRef = "/a-propos"
+  weight = 40
+
+[[menus.main]]
+  name = "Contact"
+  pageRef = "/contact"
+  weight = 50

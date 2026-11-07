@@ -1,0 +1,9 @@
+{{ define "main" }}
+<article class="wrap narrow" data-pagefind-body>
+  <header class="page-head">
+    <h1>{{ .Title }}</h1>
+    {{ with .Params.chapo }}<p class="lead">{{ . }}</p>{{ end }}
+  </header>
+  <div class="prose">{{ .Content }}</div>
+</article>
+{{ end }}

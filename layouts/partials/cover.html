@@ -1,0 +1,19 @@
+{{- /* Image de couverture d'une page.
+   Paramètres : page (la page), spec (ex. "800x500 q80 Center").
+   L'image se déclare dans l'en-tête de la page : image: couverture.jpg
+   (fichier placé à côté du .md) ou image: /images/xxx.jpg (dossier static/). */ -}}
+{{- $page := .page -}}
+{{- $alt := $page.Params.image_alt | default $page.Title -}}
+{{- with $page.Params.image -}}
+  {{- $res := $page.Resources.GetMatch . -}}
+  {{- if $res -}}
+    {{- if in (slice "jpeg" "png") $res.MediaType.SubType -}}
+      {{- $s := $res.Fill $.spec -}}
+      <img src="{{ $s.RelPermalink }}" width="{{ $s.Width }}" height="{{ $s.Height }}" alt="{{ $alt }}" loading="lazy">
+    {{- else -}}
+      <img src="{{ $res.RelPermalink }}" alt="{{ $alt }}" loading="lazy">
+    {{- end -}}
+  {{- else -}}
+    <img src="{{ . | relURL }}" alt="{{ $alt }}" loading="lazy">
+  {{- end -}}
+{{- end -}}

@@ -1,0 +1,12 @@
+{{- /* Liste paginée d'articles. Paramètre : le contexte de page (.Pages = articles). */ -}}
+{{ $pager := .Paginate (.Pages.ByDate.Reverse) 9 }}
+<div class="grid">
+  {{ range $pager.Pages }}{{ partial "card-post.html" . }}{{ end }}
+</div>
+{{ if gt $pager.TotalPages 1 }}
+<nav class="pager" aria-label="Pagination">
+  {{ if $pager.HasPrev }}<a href="{{ $pager.Prev.URL }}">← Plus récents</a>{{ else }}<span></span>{{ end }}
+  <span class="muted">Page {{ $pager.PageNumber }} sur {{ $pager.TotalPages }}</span>
+  {{ if $pager.HasNext }}<a href="{{ $pager.Next.URL }}">Plus anciens →</a>{{ else }}<span></span>{{ end }}
+</nav>
+{{ end }}
