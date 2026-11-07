@@ -786,6 +786,8 @@
         h('p', {}, 'Dans « Mise en page », choisissez « Sections » (ou « Étude de cas » pour une réalisation). Un constructeur apparaît sous le texte : ajoutez des sections (texte, grande image, vidéo, citation, galerie, texte + image) et réordonnez-les avec ↑ ↓. Le texte libre s\'affiche sous les sections.')),
       sec('Apparence, menu et réglages',
         h('p', {}, '« Apparence » : modèle de départ, couleurs, polices, logo. « Menu et réglages » : nom du site, e-mail, réseaux sociaux, ordre du menu.')),
+      sec('Revenir à une version précédente',
+        h('p', {}, 'Dans « Publier », la liste « Historique des versions » montre chaque publication. « Revenir à cette version » remet le site dans cet état. Rien n\'est effacé : le retour est lui-même une nouvelle version, et vous pouvez en annuler les effets de la même façon. Il faut d\'abord publier les modifications en cours.')),
       sec('Publier',
         h('p', {}, '« Publier » liste les fichiers modifiés. Saisissez une courte description puis cliquez sur « Publier sur le site ». « Récupérer les changements en ligne » met à jour votre copie si le site a été modifié ailleurs.'),
         h('p', { class: 'muted small' }, 'En cas de doute : rien n\'est perdu, chaque publication est conservée et peut être annulée.')));
@@ -818,13 +820,58 @@
       } catch (e) { toast(e.message, true); }
       publishBtn.disabled = false; refreshBadge();
     } }, 'Publier sur le site');
-    const idCard = !id.configured && h('div', { class: 'card', style: 'margin-bottom:1rem' },
+    const idCard = id.configured ? document.createComment('') : h('div', { class: 'card', style: 'margin-bottom:1rem' },
       h('p', { class: 'err' }, 'Première utilisation : indiquez votre nom et votre e-mail (signature des publications).'),
       h('label', {}, 'Nom', name), h('label', {}, 'Adresse e-mail', email),
       h('button', { class: 'btn', onclick: async () => {
         try { await api('POST', '/api/git/identity', { name: name.value, email: email.value }); toast('Enregistré.'); viewPublish(); }
         catch (e) { toast(e.message, true); }
       } }, 'Enregistrer'));
+    // Historique et retour à une version précédente
+    const histBox = h('div', { class: 'card', style: 'margin-top:1rem' });
+    const fmtDate = (iso) => new Date(iso).toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' });
+    const pending = st.changes.length > 0;
+    const loadHistory = async () => {
+      histBox.replaceChildren(h('h3', { style: 'margin-top:0' }, 'Historique des versions'), h('p', { class: 'muted' }, 'Chargement…'));
+      let hist;
+      try { hist = await api('GET', '/api/git/history'); } catch (e) { histBox.append(h('p', { class: 'err' }, e.message)); return; }
+      if (!hist.available) { histBox.replaceChildren(h('p', { class: 'muted' }, 'Historique indisponible.')); return; }
+      const rows = hist.items.map(it => {
+        const detail = h('div', { class: 'changes', hidden: true });
+        const toggle = h('button', { type: 'button', class: 'linkbtn', onclick: async () => {
+          if (!detail.hidden) { detail.hidden = true; return; }
+          try {
+            const r = await api('GET', '/api/git/commit?hash=' + it.hash);
+            detail.replaceChildren(...(r.files.length ? r.files.map(f => h('div', {}, h('span', { class: 'code' }, f.code), f.file)) : [h('div', { class: 'muted' }, 'Aucun fichier.')]));
+            detail.hidden = false;
+          } catch (e) { toast(e.message, true); }
+        } }, 'Fichiers modifiés');
+        const back = it.current ? h('span', { class: 'tag' }, 'Version actuelle')
+          : h('button', { type: 'button', class: 'btn sec', disabled: pending, title: pending ? 'Publiez d\'abord vos modifications en cours.' : '', onclick: async () => {
+            if (!confirm('Remettre le site dans l\'état du ' + fmtDate(it.date) + ' ?\n\nLe site actuel est conservé dans l\'historique : vous pourrez revenir en arrière à nouveau.')) return;
+            toast('Retour en cours…');
+            try {
+              const r = await api('POST', '/api/git/rollback', { hash: it.hash });
+              showLog(r);
+              toast(r.ok ? 'Version restaurée et publiée. Le site sera à jour dans 1 à 2 minutes.' : 'Le retour a échoué (voir le détail).', !r.ok);
+              refreshBadge();
+              if (r.ok) setTimeout(viewPublish, 1500);
+            } catch (e) { toast(e.message, true); }
+          } }, 'Revenir à cette version');
+        return h('div', { class: 'hist' },
+          h('div', { class: 'hist-main' },
+            h('strong', {}, fmtDate(it.date)),
+            it.published === false && h('span', { class: 'tag draft' }, 'Non envoyée'),
+            h('span', { class: 'muted' }, it.subject),
+            h('span', { class: 'muted small' }, it.author),
+            toggle),
+          back, detail);
+      });
+      histBox.replaceChildren(h('h3', { style: 'margin-top:0' }, 'Historique des versions'),
+        pending ? h('p', { class: 'err' }, 'Vous avez des modifications non publiées : publiez-les avant de revenir à une version précédente.') : document.createComment(''),
+        h('p', { class: 'muted small' }, 'Chaque publication est une version. « Revenir à cette version » remet le site dans cet état, sans rien effacer de l\'historique.'),
+        ...rows);
+    };
     main.replaceChildren(
       h('h2', {}, 'Publier'),
       idCard,
@@ -842,7 +889,8 @@
             try { const r = await api('POST', '/api/git/pull'); showLog(r); toast(r.ok ? 'À jour.' : 'Échec (voir le détail).', !r.ok); refreshBadge(); }
             catch (e) { toast(e.message, true); }
           } }, 'Récupérer les changements en ligne'))),
-      log);
+      log, histBox);
+    loadHistory();
   }
 
   // ---------- aperçu du site ----------

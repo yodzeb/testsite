@@ -925,6 +925,78 @@ def git_publish():
 
 
 # ----------------------------------------------------------------------
+# Historique et retour à une version précédente
+# ----------------------------------------------------------------------
+HASH_RE = re.compile(r"^[0-9a-f]{7,40}$")
+
+
+@app.get("/api/git/history")
+def git_history():
+    code, out = run(["git", "log", "-n", "40", "--format=%H%x1f%h%x1f%aI%x1f%an%x1f%s"])
+    if code != 0:
+        return jsonify({"available": False, "message": out})
+    c2, o2 = run(["git", "rev-list", "@{u}..HEAD"])
+    ahead = set(o2.split()) if c2 == 0 else None  # None : pas de dépôt distant connu
+    items = []
+    for i, ln in enumerate(out.split("\n")):
+        parts = ln.split("\x1f")
+        if len(parts) < 5:
+            continue
+        items.append({
+            "hash": parts[0], "short": parts[1], "date": parts[2], "author": parts[3], "subject": parts[4],
+            "current": i == 0, "published": None if ahead is None else parts[0] not in ahead,
+        })
+    return jsonify({"available": True, "items": items})
+
+
+@app.get("/api/git/commit")
+def git_commit_files():
+    h = request.args.get("hash", "")
+    if not HASH_RE.match(h):
+        abort(400)
+    code, out = run(["git", "show", "--name-status", "--format=", "-M", h])
+    files = []
+    for ln in out.split("\n"):
+        if ln.strip():
+            parts = ln.split("\t")
+            files.append({"code": parts[0][:1], "file": parts[-1]})
+    return jsonify({"files": files})
+
+
+@app.post("/api/git/rollback")
+def git_rollback():
+    """Remet le site dans l'état d'une version précédente, par un NOUVEAU commit :
+    l'historique est conservé, et le retour peut lui-même être annulé."""
+    h = (request.get_json(force=True).get("hash") or "").strip()
+    if not HASH_RE.match(h):
+        return err("Version invalide.")
+    if run(["git", "cat-file", "-e", h + "^{commit}"])[0] != 0:
+        return err("Version introuvable.")
+    _, status = run(["git", "status", "--porcelain"])
+    if status.strip():
+        return err("Des modifications ne sont pas encore publiées : publiez-les d'abord, puis recommencez.")
+    _, head = run(["git", "rev-parse", "HEAD"])
+    if head.strip().startswith(h):
+        return err("C'est déjà la version actuelle.")
+    _, date = run(["git", "log", "-1", "--format=%ad", "--date=format:%d/%m/%Y %H:%M", h])
+    log = []
+    code, out = run(["git", "read-tree", "-u", "--reset", h])
+    if code != 0:
+        run(["git", "read-tree", "-u", "--reset", "HEAD"])
+        return jsonify({"ok": False, "log": out})
+    code, out = run(["git", "commit", "--allow-empty", "-m", f"Retour à la version du {date.strip()} ({h[:7]})"])
+    log.append(out)
+    if code != 0:
+        run(["git", "read-tree", "-u", "--reset", "HEAD"])  # annule : rien n'a changé
+        return jsonify({"ok": False, "log": "\n".join(log)})
+    code, out = run(["git", "push"])
+    log.append(out)
+    if code != 0:
+        log.append("\nLe retour est enregistré sur votre ordinateur mais pas encore envoyé : réessayez avec « Publier sur le site ».")
+    return jsonify({"ok": code == 0, "log": "\n".join(x for x in log if x)})
+
+
+# ----------------------------------------------------------------------
 # Aperçu du site complet (Hugo)
 # ----------------------------------------------------------------------
 def find_hugo() -> str | None:

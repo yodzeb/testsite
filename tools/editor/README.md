@@ -30,6 +30,7 @@ L'éditeur n'est accessible que depuis votre ordinateur.
 - **Menu et réglages** : nom du site, e-mail, réseaux sociaux, ordre et liens du menu.
 - **Aperçu du site complet** : construit le vrai site avec Hugo et l'ouvre dans un nouvel onglet (brouillons inclus). Hugo est **téléchargé automatiquement** la première fois s'il n'est pas installé (dans `.tools/`, jamais envoyé sur GitHub).
 - **Publier** : voir la liste des fichiers modifiés, saisir une description et cliquer sur « Publier sur le site » (enregistre les modifications et les envoie sur GitHub ; le site est en ligne 1 à 2 minutes plus tard). « Récupérer les changements en ligne » met à jour votre copie si le dépôt a été modifié ailleurs.
+- **Revenir à une version précédente** : sous le bouton de publication, « Historique des versions » liste chaque publication (date, description, fichiers modifiés). « Revenir à cette version » remet le site dans cet état en créant une **nouvelle** version : rien n'est effacé, et le retour peut lui-même être annulé de la même façon. Il faut d'abord publier les modifications en cours.
 
 ## Première publication : identité et connexion GitHub
 
