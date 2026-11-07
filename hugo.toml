@@ -11,6 +11,9 @@ title = "Prénom Nom"
 defaultContentLanguage = "fr"
 languageCode = "fr-FR"
 enableRobotsTXT = true
+# Liens internes (CSS, JS, images, menu) relatifs : le site fonctionne
+# aussi bien sous un sous-dossier (github.io/depot/) que sur un domaine perso.
+relativeURLs = true
 summaryLength = 45
 
 [taxonomies]
