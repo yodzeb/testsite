@@ -1,7 +1,8 @@
 ---
-title: "Enquête : l'eau dans nos territoires"
+surtitre: "Enquête"
+title: "L'eau dans nos territoires"
 date: 2026-02-01
-description: "Six mois d'enquête sur la gestion de l'eau dans trois départements."
+chapo: "Six mois d'enquête sur la gestion de l'eau dans trois départements."
 themes: ["économie"]
 format: "texte"
 media: "Magazine Exemple"
@@ -41,3 +42,9 @@ sections:
 ---
 
 Texte libre complémentaire, affiché sous les sections.
+
+## Un intertitre
+
+![Illustration d'exemple](couverture.svg "Une légende de photo, comme dans un magazine | © Anne Fourney")
+
+La suite du texte.

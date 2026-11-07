@@ -44,6 +44,8 @@ F_DESC = {"key": "description", "label": "Résumé (aperçus, moteurs de recherc
 F_IMAGE = {"key": "image", "label": "Image de couverture", "type": "image"}
 F_ALT = {"key": "image_alt", "label": "Texte alternatif de la couverture", "type": "text"}
 F_DRAFT = {"key": "draft", "label": "Brouillon (non publié)", "type": "bool"}
+F_SURTITRE = {"key": "surtitre", "label": "Sur-titre", "type": "text"}
+F_CHAPO = {"key": "chapo", "label": "Chapo (introduction sous le titre)", "type": "textarea"}
 F_THEMES = {"key": "themes", "label": "Thèmes", "type": "themes"}
 F_FORMAT = {"key": "format", "label": "Format", "type": "select", "default": "texte",
             "options": [["texte", "Texte"], ["video", "Vidéo"], ["audio", "Podcast (audio)"]]}
@@ -59,7 +61,7 @@ COLLECTIONS = {
         "label": "Articles",
         "singular": "article",
         "fields": [
-            F_TITLE, F_DATE, F_DESC, F_THEMES,
+            F_SURTITRE, F_TITLE, F_CHAPO, F_DATE, F_THEMES,
             {"key": "tags", "label": "Tags (séparés par des virgules)", "type": "tags"},
             F_FORMAT, F_VIDEO, F_AUDIO, F_LIENS,
             F_IMAGE, F_ALT, F_DRAFT, F_LAYOUT, F_SECTIONS,
@@ -69,7 +71,7 @@ COLLECTIONS = {
         "label": "Réalisations",
         "singular": "réalisation",
         "fields": [
-            F_TITLE, F_DATE, F_DESC, F_THEMES,
+            F_SURTITRE, F_TITLE, F_CHAPO, F_DATE, F_THEMES,
             F_FORMAT, F_VIDEO, F_AUDIO,
             {"key": "media", "label": "Média / client", "type": "text"},
             {"key": "role", "label": "Rôle", "type": "text"},
@@ -224,6 +226,8 @@ def load_item(p: Path) -> dict:
     rel = rel_of(p)
     coll = collection_of(rel)
     fm, body = split_front_matter(p.read_text(encoding="utf-8"))
+    if coll in ("blog", "book") and not fm.get("chapo") and fm.get("description"):
+        fm["chapo"] = fm.pop("description")  # l'ancien « résumé » devient le chapo
     known = {f["key"] for f in COLLECTIONS[coll]["fields"]}
     fields = {}
     for f in COLLECTIONS[coll]["fields"]:
@@ -473,6 +477,14 @@ def api_preview():
         data.get("body") or "",
     )
     html = markdown.markdown(body, extensions=["extra", "sane_lists"])
+
+    def figure(m):
+        attrs, title = m.group(1), m.group(2)
+        parts = title.split(" | ", 1)
+        legende, credit = (parts[0], parts[1]) if len(parts) > 1 else ((title, "") if not title.startswith("©") else ("", title))
+        cap = (f'<span class="legende">{legende}</span>' if legende else "") + (f' <span class="credit">{credit}</span>' if credit else "")
+        return f'<figure class="photo"><img {attrs.strip()} /><figcaption>{cap}</figcaption></figure>'
+    html = re.sub(r'<img ([^>]*?)\s*title="([^"]*)"\s*/?>', figure, html)
     path = data.get("path", "")
     if path:
         from urllib.parse import quote
@@ -641,6 +653,41 @@ def api_raw_get():
 def api_raw_put():
     HUGO_TOML.write_text((request.get_json(force=True).get("text") or "").replace("\r\n", "\n"), encoding="utf-8")
     return jsonify({"ok": True})
+
+
+# ----------------------------------------------------------------------
+# Recherche de contenus (titre, chapo, thèmes et texte) pour les « Voir aussi »
+# ----------------------------------------------------------------------
+@app.get("/api/search")
+def api_search():
+    q = (request.args.get("q") or "").strip().lower()
+    exclude = request.args.get("exclude", "")
+    words = [w for w in re.split(r"\s+", q) if w]
+    if not words:
+        return jsonify([])
+    results = []
+    for coll in ("blog", "book"):
+        for f in iter_collection(coll):
+            rel = rel_of(f)
+            if rel == exclude:
+                continue
+            fm, body = split_front_matter(f.read_text(encoding="utf-8"))
+            title = str(fm.get("title") or rel)
+            head = " ".join([title, str(fm.get("surtitre") or ""), str(fm.get("chapo") or fm.get("description") or ""),
+                             " ".join(str(x) for x in fm.get("themes") or []), str(fm.get("media") or "")]).lower()
+            hay = head + " " + body.lower()
+            if not all(w in hay for w in words):
+                continue
+            score = sum(3 for w in words if w in title.lower()) + sum(1 for w in words if w in head)
+            pos = body.lower().find(words[0])
+            snippet = ""
+            if pos >= 0 and not all(w in head for w in words):
+                snippet = "…" + re.sub(r"\s+", " ", body[max(0, pos - 40): pos + 90]).strip() + "…"
+            results.append({"path": rel, "title": title, "collection": coll,
+                            "date": str(fm.get("date") or "")[:10], "snippet": snippet, "score": score})
+    results.sort(key=lambda r: (-r["score"], r["date"]), reverse=False)
+    results.sort(key=lambda r: -r["score"])
+    return jsonify(results[:15])
 
 
 # ----------------------------------------------------------------------

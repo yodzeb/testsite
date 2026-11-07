@@ -8,6 +8,7 @@
     {{ partial "format-badge.html" . }}
   </div>
   <div class="tile-body">
+    {{ with .Params.surtitre }}<p class="surtitre">{{ . }}</p>{{ end }}
     <h3>{{ .Title }}</h3>
     <p class="meta">
       {{ with .Params.media }}{{ . }}{{ end }}{{ with .Params.categorie }}{{ if $.Params.media }} · {{ end }}{{ . }}{{ end }}

@@ -7,16 +7,18 @@
       <div class="etude-bg" style="background-image:url('{{ $bg }}')"></div>
       <div class="etude-text wrap">
         <p class="meta"><a href="{{ "book/" | relURL }}">Book</a>{{ with .Params.categorie }} · {{ . }}{{ end }} {{ partial "format-badge.html" . }}</p>
+        {{ with .Params.surtitre }}<p class="surtitre">{{ . }}</p>{{ end }}
         <h1>{{ .Title }}</h1>
-        {{ with .Description }}<p class="lead">{{ . }}</p>{{ end }}
+        {{ with (.Params.chapo | default .Description) }}<p class="lead chapo">{{ . }}</p>{{ end }}
       </div>
     </header>
   {{ else }}
     <div class="wrap narrow-wide">
       <header class="page-head">
         <p class="meta"><a href="{{ "book/" | relURL }}">Book</a>{{ with .Params.categorie }} · {{ . }}{{ end }} {{ partial "format-badge.html" . }}</p>
+        {{ with .Params.surtitre }}<p class="surtitre">{{ . }}</p>{{ end }}
         <h1>{{ .Title }}</h1>
-        {{ with .Description }}<p class="lead">{{ . }}</p>{{ end }}
+        {{ with (.Params.chapo | default .Description) }}<p class="lead chapo">{{ . }}</p>{{ end }}
       </header>
     </div>
   {{ end }}

@@ -9,7 +9,8 @@
       <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date | time.Format ":date_long" }}</time>
       {{ partial "format-badge.html" . }}
     </p>
+    {{ with .Params.surtitre }}<p class="surtitre">{{ . }}</p>{{ end }}
     <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
-    <p>{{ .Description | default .Summary | plainify | truncate 200 }}</p>
+    <p>{{ .Params.chapo | default .Description | default .Summary | plainify | truncate 200 }}</p>
   </div>
 </article>

@@ -1,7 +1,8 @@
 ---
-title: "Exemple d'article vidéo : une journée en montagne"
+surtitre: "Randonnée"
+title: "Une journée en montagne"
 date: 2026-06-10
-description: "Un article avec une vidéo YouTube intégrée, lue seulement au clic."
+chapo: "Un article avec une vidéo YouTube intégrée, lue seulement au clic."
 themes: ["randonnée"]
 tags: ["montagne"]
 format: "video"

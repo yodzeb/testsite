@@ -61,6 +61,7 @@
     state.dirty = false;
     state.view = view;
     document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.view === view));
+    if (view === 'help') return viewHelp();
     if (view === 'appearance') return viewAppearance();
     if (view === 'settings') return viewSettings();
     if (view === 'publish') return viewPublish();
@@ -135,9 +136,92 @@
     return { el, get: () => [...sel] };
   }
 
+  // Outils Markdown partagés (texte de l'article et blocs de sections) : boutons + raccourcis
+  function mdTools(ta, notify) {
+    const MOD = /Mac/.test(navigator.platform) ? '⌘' : 'Ctrl';
+    const ALT = /Mac/.test(navigator.platform) ? '⌥' : 'Alt';
+    const done = () => { ta.focus(); notify(); };
+    const wrap = (a, b, ph) => {
+      const s = ta.selectionStart, e = ta.selectionEnd;
+      const sel = ta.value.slice(s, e) || ph;
+      ta.setRangeText(a + sel + b, s, e, 'end');
+      ta.setSelectionRange(s + a.length, s + a.length + sel.length);
+      done();
+    };
+    // applique/retire un préfixe sur toutes les lignes sélectionnées
+    const toggleLines = (re, make) => {
+      const s = ta.selectionStart, e = ta.selectionEnd;
+      const start = ta.value.lastIndexOf('\n', s - 1) + 1;
+      let end = ta.value.indexOf('\n', e);
+      if (end < 0) end = ta.value.length;
+      const ls = ta.value.slice(start, end).split('\n');
+      const all = ls.every(l => !l.trim() || re.test(l));
+      const out = ls.map((l, i) => (all ? l.replace(re, '') : make(l.replace(re, ''), i))).join('\n');
+      ta.setRangeText(out, start, end, 'select');
+      done();
+    };
+    const interTitre = () => toggleLines(/^#{1,6}\s*/, l => '## ' + (l || 'Intertitre'));
+    const citation = () => toggleLines(/^>\s?/, l => '> ' + l);
+    const liste = () => toggleLines(/^[-*]\s+/, l => '- ' + l);
+    const numerotee = () => toggleLines(/^\d+\.\s+/, (l, i) => (i + 1) + '. ' + l);
+    const lien = () => {
+      const url = prompt('Adresse du lien :', 'https://');
+      if (url) wrap('[', '](' + url + ')', 'texte du lien');
+    };
+    const defs = [
+      ['G', 'Gras', MOD + '+B', () => wrap('**', '**', 'texte')],
+      ['I', 'Italique', MOD + '+I', () => wrap('*', '*', 'texte')],
+      ['Intertitre', 'Intertitre', MOD + '+' + ALT + '+H', interTitre],
+      ['Citation', 'Citation', MOD + '+' + ALT + '+Q', citation],
+      ['Liste', 'Liste à puces', MOD + '+' + ALT + '+L', liste],
+      ['1. Liste', 'Liste numérotée', MOD + '+' + ALT + '+N', numerotee],
+      ['Lien', 'Lien', MOD + '+K', lien],
+    ];
+    const buttons = defs.map(([label, name, key, fn]) =>
+      h('button', { type: 'button', title: name + ' (' + key + ')', onclick: fn }, label));
+    ta.addEventListener('keydown', e => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const alt = { KeyH: interTitre, KeyQ: citation, KeyL: liste, KeyN: numerotee };
+      const plain = { KeyB: () => wrap('**', '**', 'texte'), KeyI: () => wrap('*', '*', 'texte'), KeyK: lien };
+      const fn = (e.altKey ? alt : plain)[e.code];
+      if (fn) { e.preventDefault(); fn(); }
+    });
+    return { buttons };
+  }
+
+  // Contenus liés : recherche par titre, thème ou texte (la liste devient vite longue)
+  function linkSearch(selected, titles, exclude, onChange) {
+    const sel = new Set(selected);
+    const chips = h('div', { class: 'chips' });
+    const results = h('div', { class: 'results' });
+    const inp = h('input', { type: 'search', placeholder: 'Rechercher un article ou une réalisation…' });
+    const drawChips = () => chips.replaceChildren(...[...sel].map(p =>
+      h('span', { class: 'chip2' }, titles[p] || p,
+        h('button', { type: 'button', title: 'Retirer', onclick: () => { sel.delete(p); drawChips(); onChange(); } }, '✕'))));
+    let timer;
+    inp.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(async () => {
+        const q = inp.value.trim();
+        if (q.length < 2) { results.replaceChildren(); return; }
+        try {
+          const r = (await api('GET', '/api/search?q=' + encodeURIComponent(q) + '&exclude=' + encodeURIComponent(exclude())))
+            .filter(x => !sel.has(x.path));
+          results.replaceChildren(...(r.length ? r.map(x => h('button', { type: 'button', class: 'res', onclick: () => {
+            sel.add(x.path); titles[x.path] = x.title; inp.value = ''; results.replaceChildren(); drawChips(); onChange();
+          } }, h('strong', {}, x.title),
+            h('span', { class: 'muted small' }, (x.collection === 'book' ? 'Réalisation' : 'Article') + (x.date ? ' · ' + x.date : '')),
+            x.snippet && h('em', { class: 'muted small' }, x.snippet))) : [h('p', { class: 'muted small' }, 'Aucun résultat.')]));
+        } catch (e) { /* ignoré */ }
+      }, 250);
+    });
+    drawChips();
+    return { el: h('div', {}, chips, inp, results), get: () => [...sel] };
+  }
+
   const SECTION_TYPES = {
     texte: { label: 'Texte', fields: [
-      ['titre', 'Titre', 'text'], ['texte', 'Texte (Markdown)', 'textarea'],
+      ['titre', 'Titre', 'text'], ['texte', 'Texte (Markdown)', 'markdown'],
       ['fond', 'Fond', 'select', [['clair', 'Clair'], ['alt', 'Gris léger'], ['accent', 'Couleur d\'accent']]]] },
     image: { label: 'Grande image', fields: [
       ['image', 'Image', 'image'], ['titre', 'Titre (sur l\'image)', 'text'], ['texte', 'Texte (sur l\'image)', 'textarea'],
@@ -151,7 +235,7 @@
       ['fond', 'Fond', 'select', [['accent', 'Couleur d\'accent'], ['clair', 'Clair'], ['alt', 'Gris léger']]]] },
     galerie: { label: 'Galerie d\'images', fields: [['titre', 'Titre', 'text'], ['images', 'Images', 'images']] },
     colonnes: { label: 'Texte + image', fields: [
-      ['titre', 'Titre', 'text'], ['texte', 'Texte (Markdown)', 'textarea'], ['image', 'Image', 'image'],
+      ['titre', 'Titre', 'text'], ['texte', 'Texte (Markdown)', 'markdown'], ['image', 'Image', 'image'],
       ['cote', 'Image à', 'select', [['droite', 'droite'], ['gauche', 'gauche']]], ['alt', 'Description de l\'image', 'text']] },
   };
 
@@ -165,7 +249,13 @@
     const move = (i, d) => { const j = i + d; if (j < 0 || j >= blocks.length) return; [blocks[i], blocks[j]] = [blocks[j], blocks[i]]; draw(); onChange(); };
     function field(b, [key, label, kind, opts]) {
       let el;
-      if (kind === 'textarea') { el = h('textarea', { rows: 3 }); el.value = b[key] || ''; el.addEventListener('input', () => { b[key] = el.value; onChange(); }); }
+      if (kind === 'markdown') {
+        const ta = h('textarea', { rows: 6 });
+        ta.value = b[key] || '';
+        ta.addEventListener('input', () => { b[key] = ta.value; onChange(); });
+        const md = mdTools(ta, () => { b[key] = ta.value; onChange(); });
+        el = h('div', {}, h('div', { class: 'toolbar' }, md.buttons), ta);
+      } else if (kind === 'textarea') { el = h('textarea', { rows: 3 }); el.value = b[key] || ''; el.addEventListener('input', () => { b[key] = el.value; onChange(); }); }
       else if (kind === 'select') {
         el = h('select', {}, opts.map(([v, l]) => h('option', { value: v }, l)));
         el.value = b[key] || opts[0][0];
@@ -230,19 +320,22 @@
     let builder = null;
 
     const form = h('div', { class: 'card' });
+    const HEAD = ['surtitre', 'title', 'chapo'];
+    const headCard = h('div', { class: 'card headline' });
     for (const f of schema) {
       const v = item.fields[f.key];
+      const target = HEAD.includes(f.key) ? headCard : form;
       let el;
       if (f.type === 'themes') {
         const w = checkList(themesList.map(t => [t, t]), v || [], markDirty, 'Nouveau thème + Entrée');
         getters[f.key] = w.get;
-        form.append(h('label', {}, f.label), w.el, h('div', { style: 'height:.9rem' }));
+        target.append(h('label', {}, f.label), w.el, h('div', { style: 'height:.9rem' }));
         continue;
       }
       if (f.type === 'pages') {
-        const w = checkList(linkable, v || [], markDirty);
+        const w = linkSearch(v || [], Object.fromEntries(linkable), () => state.item.path, markDirty);
         getters[f.key] = w.get;
-        form.append(h('label', {}, f.label), h('div', { class: 'scroll' }, w.el), h('div', { style: 'height:.9rem' }));
+        target.append(h('label', {}, f.label), w.el, h('div', { style: 'height:.9rem' }));
         continue;
       }
       if (f.type === 'sections') continue; // construit plus bas
@@ -251,7 +344,7 @@
         el.value = v || f.default || f.options[0][0];
         el.addEventListener('change', () => { markDirty(); if (f.key === 'mise_en_page') toggleBuilder(); });
         inputs[f.key] = el;
-        form.append(h('label', {}, f.label, el));
+        target.append(h('label', {}, f.label, el));
         continue;
       }
       if (f.type === 'textarea') el = h('textarea', { rows: 3 });
@@ -266,7 +359,7 @@
       el.addEventListener('input', markDirty);
       el.addEventListener('change', markDirty);
       inputs[f.key] = el;
-      form.append(f.type === 'bool'
+      target.append(f.type === 'bool'
         ? h('label', { class: 'check' }, el, f.label)
         : h('label', {}, f.label, el));
     }
@@ -318,23 +411,58 @@
       body.setRangeText(t, body.selectionStart, body.selectionEnd, 'end');
       body.focus(); markDirty(); refreshPreview();
     };
-    const tb = h('div', { class: 'toolbar' },
-      h('button', { type: 'button', title: 'Gras', onclick: () => wrap('**', '**', 'texte') }, 'G'),
-      h('button', { type: 'button', title: 'Italique', onclick: () => wrap('*', '*', 'texte') }, 'I'),
-      h('button', { type: 'button', onclick: () => prefix('## ') }, 'Titre'),
-      h('button', { type: 'button', onclick: () => prefix('### ') }, 'Sous-titre'),
-      h('button', { type: 'button', onclick: () => prefix('- ') }, 'Liste'),
-      h('button', { type: 'button', onclick: () => prefix('> ') }, 'Citation'),
-      h('button', { type: 'button', onclick: () => {
-        const url = prompt('Adresse du lien :', 'https://');
-        if (url) wrap('[', '](' + url + ')', 'texte du lien');
-      } }, 'Lien'),
-      h('button', { type: 'button', onclick: () => fileInput.click() }, 'Image…'),
-      h('button', { type: 'button', onclick: () => {
+    const MOD = /Mac/.test(navigator.platform) ? '⌘' : 'Ctrl';
+    const ALT = /Mac/.test(navigator.platform) ? '⌥' : 'Alt';
+    const md = mdTools(body, () => { markDirty(); refreshPreview(); });
+    const btn = (label, title, fn) => h('button', { type: 'button', title, onclick: fn }, label);
+    const tb = h('div', { class: 'toolbar' }, md.buttons,
+      btn('Photo + légende', 'Photo avec légende et crédit (' + MOD + '+' + ALT + '+P)', () => photoDialog()),
+      btn('Vidéo…', 'Vidéo YouTube', () => {
         const url = prompt('Adresse de la vidéo YouTube :', 'https://www.youtube.com/watch?v=');
         if (url && /youtu/.test(url)) insertText('\n{{< video url="' + url.trim() + '" >}}\n');
         else if (url) toast('Adresse YouTube non reconnue.', true);
-      } }, 'Vidéo…'));
+      }));
+    body.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.altKey && e.code === 'KeyP') { e.preventDefault(); photoDialog(); }
+    });
+
+    // Dialogue « Photo + légende » : écrit ![description](fichier "Légende | © Crédit")
+    const photoDialog = (preselect) => new Promise(resolve => {
+      const dlg = h('dialog', { class: 'photo-dlg' });
+      const sel = h('select', {}, state.item.images.map(n => h('option', { value: n }, n)));
+      if (preselect) sel.value = preselect;
+      const thumbEl = h('img', { class: 'thumb', alt: '' });
+      const thumb = () => { thumbEl.src = sel.value ? '/api/media?path=' + encodeURIComponent(state.item.path) + '&name=' + encodeURIComponent(sel.value) : ''; };
+      sel.addEventListener('change', thumb); thumb();
+      const up = h('input', { type: 'file', accept: 'image/*', hidden: true });
+      up.addEventListener('change', async () => {
+        if (!up.files[0]) return;
+        const n = await upload(up.files[0], false);
+        if (n) { sel.replaceChildren(...state.item.images.map(x => h('option', { value: x }, x))); sel.value = n; thumb(); }
+      });
+      const legende = h('input', { type: 'text', placeholder: 'Légende affichée sous la photo' });
+      const credit = h('input', { type: 'text', value: '© ' });
+      const alt = h('input', { type: 'text', placeholder: 'Ce que montre la photo (lecteurs malvoyants)' });
+      const close = (v) => { dlg.close(); dlg.remove(); resolve(v); };
+      const clean = s => s.replace(/"/g, '”').replace(/\s+/g, ' ').trim();
+      const ok = h('button', { type: 'button', class: 'btn', onclick: () => {
+        if (!sel.value) { toast('Choisissez ou ajoutez une photo.', true); return; }
+        const l = clean(legende.value);
+        let c = clean(credit.value);
+        if (c === '©') c = '';
+        const title = [l, c].filter(Boolean).join(' | ');
+        const desc = clean(alt.value || legende.value || state.item.fields.title || '');
+        insertText('\n![' + desc + '](' + sel.value + (title ? ' "' + title + '"' : '') + ')\n');
+        close(true);
+      } }, 'Insérer la photo');
+      dlg.append(h('h3', { style: 'margin-top:0' }, 'Photo avec légende'),
+        h('div', { class: 'imgpick' }, sel, h('button', { type: 'button', class: 'btn sec', onclick: () => up.click() }, 'Ajouter une photo…'), up),
+        thumbEl,
+        h('label', {}, 'Légende', legende), h('label', {}, 'Crédit photo', credit),
+        h('label', {}, 'Description pour l\'accessibilité (facultatif)', alt),
+        h('div', { class: 'bar' }, ok, h('button', { type: 'button', class: 'btn sec', onclick: () => close(false) }, 'Annuler')));
+      document.body.append(dlg); dlg.showModal(); legende.focus();
+    });
 
     // images
     const imgPanel = h('div', {});
@@ -346,17 +474,13 @@
             h('img', { src: '/api/media?path=' + encodeURIComponent(it.path) + '&name=' + encodeURIComponent(n), alt: '' }),
             h('figcaption', { title: n }, n),
             h('div', { class: 'acts' },
-              h('button', { type: 'button', onclick: () => insertImage(n) }, 'Insérer'),
+              h('button', { type: 'button', onclick: () => insertImage(n) }, 'Légende…'),
               inputs.image && h('button', { type: 'button', onclick: () => { inputs.image.value = n; inputs.image.dataset.v = n; markDirty(); } }, 'Couverture'),
               h('button', { type: 'button', onclick: () => removeImage(n) }, '✕'))))) : h('p', { class: 'muted' }, 'Aucune image.'));
       fillCover();
       if (builder) builder.refresh();
     };
-    const insertImage = (name) => {
-      const alt = prompt('Description de l\'image (pour l\'accessibilité) :', '');
-      if (alt === null) return;
-      insertText('\n![' + (alt || state.item.fields.title || '') + '](' + name + ')\n');
-    };
+    const insertImage = (name) => photoDialog(name);
     const removeImage = async (name) => {
       if (!confirm('Supprimer l\'image « ' + name + ' » ?')) return;
       try {
@@ -429,6 +553,7 @@
     function toggleBuilder() {
       builderBox.hidden = !secField || !inputs.mise_en_page || inputs.mise_en_page.value === 'standard';
     }
+    HEAD.forEach(k => { if (inputs[k]) inputs[k].classList.add('hl-' + k); });
     main.replaceChildren(
       h('div', { class: 'bar' },
         h('button', { class: 'btn sec', onclick: () => go(coll) }, '← ' + SCHEMA[coll].label),
@@ -441,7 +566,7 @@
         saveBtn),
       h('div', { class: 'cols' },
         h('div', {}, form, h('h3', {}, 'Images'), drop, imgPanel, fileInput),
-        h('div', {}, h('h3', { style: 'margin-top:0' }, 'Texte'), tb,
+        h('div', {}, headCard, h('h3', {}, 'Texte'), tb,
           h('div', { class: 'split' }, body, preview), builderBox)));
     drawImages();
     toggleBuilder();
@@ -616,6 +741,56 @@
     drawPreview();
   }
 
+  // ---------- aide ----------
+  function viewHelp() {
+    const mod = /Mac/.test(navigator.platform) ? '⌘' : 'Ctrl';
+    const alt = /Mac/.test(navigator.platform) ? '⌥' : 'Alt';
+    const sec = (title, ...kids) => h('div', { class: 'card help' }, h('h3', { style: 'margin-top:0' }, title), ...kids);
+    const row = (a, b) => h('tr', {}, h('td', {}, h('strong', {}, a)), h('td', {}, b));
+    const kbd = (s) => h('kbd', {}, s);
+    main.replaceChildren(
+      h('h2', {}, 'Aide'),
+      sec('Démarrer',
+        h('ol', {},
+          h('li', {}, 'Choisissez « Articles » ou « Réalisations », puis « + Nouvel·le » : le contenu est créé en brouillon.'),
+          h('li', {}, 'Remplissez le sur-titre, le titre et le chapo, puis écrivez le texte.'),
+          h('li', {}, 'Cliquez sur « Enregistrer » (', kbd(mod + '+S'), ').'),
+          h('li', {}, 'Décochez « Brouillon » quand l\'article est prêt.'),
+          h('li', {}, '« Aperçu du site complet » montre le vrai site, puis « Publier » le met en ligne (1 à 2 minutes).'))),
+      sec('Les éléments d\'un article',
+        h('table', { class: 'helptable' },
+          row('Sur-titre', 'Petit texte au-dessus du titre (rubrique, lieu, accroche courte).'),
+          row('Titre', 'Titre principal de l\'article.'),
+          row('Chapo', 'Introduction affichée en gros sous le titre ; elle sert aussi de résumé dans les listes et les moteurs de recherche.'),
+          row('Intertitre', 'Titre de section dans le texte. Bouton « Intertitre » ou ' + mod + '+' + alt + '+H (sur la ligne en cours).'),
+          row('Photo + légende', 'Bouton « Photo + légende » ou ' + mod + '+' + alt + '+P : choisissez ou ajoutez une photo, saisissez la légende et le crédit photo. Le crédit apparaît en petit à côté de la légende.'))),
+      sec('Raccourcis clavier (dans le texte)',
+        h('table', { class: 'helptable' },
+          row(mod + '+B', 'Gras'), row(mod + '+I', 'Italique'), row(mod + '+K', 'Lien'),
+          row(mod + '+' + alt + '+H', 'Intertitre'), row(mod + '+' + alt + '+Q', 'Citation'),
+          row(mod + '+' + alt + '+L', 'Liste à puces'), row(mod + '+' + alt + '+N', 'Liste numérotée'),
+          row(mod + '+' + alt + '+P', 'Photo + légende (texte de l\'article)'),
+          row(mod + '+S', 'Enregistrer')),
+        h('p', { class: 'muted small' }, 'Ces raccourcis fonctionnent aussi dans les textes des sections (types « Texte » et « Texte + image »). Sur une sélection de plusieurs lignes, citation et listes s\'appliquent à toutes les lignes ; un second appui les retire.')),
+      sec('Images et vidéos',
+        h('ul', {},
+          h('li', {}, 'Glissez une image dans la zone « Images » ou dans le texte, ou collez-la : l\'éditeur la réduit et la range avec l\'article, puis propose de saisir la légende.'),
+          h('li', {}, 'Image de couverture : bouton « Couverture » sous la miniature.'),
+          h('li', {}, 'Vidéo YouTube : champ « Vidéo YouTube » (en haut de l\'article) ou bouton « Vidéo… » (dans le texte). Elle ne se charge qu\'au clic du lecteur.'))),
+      sec('Thèmes, format et « Voir aussi »',
+        h('ul', {},
+          h('li', {}, 'Cochez les thèmes (ou ajoutez-en un avec Entrée) : ils servent aux filtres du book et aux pages de thèmes.'),
+          h('li', {}, 'Format : texte, vidéo ou podcast (étiquette sur les vignettes).'),
+          h('li', {}, 'Contenus liés : tapez quelques lettres du titre ou du texte d\'un autre contenu, cliquez sur le résultat. Des contenus de mêmes thèmes sont aussi proposés automatiquement.'))),
+      sec('Mises en page par sections',
+        h('p', {}, 'Dans « Mise en page », choisissez « Sections » (ou « Étude de cas » pour une réalisation). Un constructeur apparaît sous le texte : ajoutez des sections (texte, grande image, vidéo, citation, galerie, texte + image) et réordonnez-les avec ↑ ↓. Le texte libre s\'affiche sous les sections.')),
+      sec('Apparence, menu et réglages',
+        h('p', {}, '« Apparence » : modèle de départ, couleurs, polices, logo. « Menu et réglages » : nom du site, e-mail, réseaux sociaux, ordre du menu.')),
+      sec('Publier',
+        h('p', {}, '« Publier » liste les fichiers modifiés. Saisissez une courte description puis cliquez sur « Publier sur le site ». « Récupérer les changements en ligne » met à jour votre copie si le site a été modifié ailleurs.'),
+        h('p', { class: 'muted small' }, 'En cas de doute : rien n\'est perdu, chaque publication est conservée et peut être annulée.')));
+  }
+
   // ---------- publication (Git) ----------
   async function viewPublish() {
     const st = await api('GET', '/api/git/status');
@@ -682,5 +857,6 @@
 
   // ---------- démarrage ----------
   document.querySelectorAll('#nav button').forEach(b => b.addEventListener('click', () => go(b.dataset.view)));
+  document.getElementById('btn-help').addEventListener('click', () => go('help'));
   api('GET', '/api/schema').then(s => { SCHEMA = s; go('blog'); refreshBadge(); });
 })();

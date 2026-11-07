@@ -3,13 +3,14 @@
 <article data-pagefind-body>
   <div class="wrap narrow">
     <header class="page-head">
+      {{ with .Params.surtitre }}<p class="surtitre">{{ . }}</p>{{ end }}
+      <h1>{{ .Title }}</h1>
+      {{ with (.Params.chapo | default .Description) }}<p class="lead chapo">{{ . }}</p>{{ end }}
       <p class="meta">
         <a href="{{ "blog/" | relURL }}">Blog</a> ·
         <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date | time.Format ":date_long" }}</time> ·
         {{ .ReadingTime }} min de lecture {{ partial "format-badge.html" . }}
       </p>
-      <h1>{{ .Title }}</h1>
-      {{ with .Description }}<p class="lead">{{ . }}</p>{{ end }}
     </header>
   </div>
 

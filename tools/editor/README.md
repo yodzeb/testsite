@@ -19,6 +19,7 @@ L'éditeur n'est accessible que depuis votre ordinateur.
 ## Utilisation
 
 - **Articles / Réalisations** : « + Nouvel·le » crée un brouillon. Le formulaire à gauche contient titre, date, résumé, tags, image de couverture ; le texte s'écrit à droite en Markdown avec l'aperçu en direct. `Ctrl+S` (ou `Cmd+S`) enregistre.
+- **Éléments d'un article** : sur-titre, titre et chapo se saisissent dans le bloc en haut de la zone de rédaction. Dans le texte : bouton **Intertitre** (`Ctrl+Alt+H`), bouton **Photo + légende** (`Ctrl+Alt+P`, avec crédit photo affiché en petit), plus `Ctrl+B` gras, `Ctrl+I` italique, `Ctrl+K` lien, `Ctrl+Alt+Q` citation, `Ctrl+Alt+L` liste, `Ctrl+Alt+N` liste numérotée, aussi dans les textes des sections (sur Mac : `⌘`). Le bouton **?** en bas à droite ouvre l'aide.
 - **Images** : glissez-les dans la zone « Images » ou dans le texte, ou collez-les depuis le presse-papiers. L'éditeur les range à côté de l'article, réduit les trop grandes photos (2400 px maximum) et demande une description (accessibilité). Boutons : *Insérer* dans le texte, *Couverture*, supprimer.
 - **Brouillon** : décochez « Brouillon » pour que l'article soit publié.
 - **Thèmes, format, contenus liés** : cochez les thèmes (randonnée, lifestyle, culture, économie…, nouveaux thèmes possibles), choisissez le format (texte, vidéo, podcast) et les contenus « Voir aussi ». Les contenus de mêmes thèmes sont aussi proposés automatiquement en bas de chaque page.

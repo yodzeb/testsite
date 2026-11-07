@@ -1,0 +1,25 @@
+{{- /* Image Markdown : ![description](fichier.jpg "Légende | © Crédit")
+   Avec un titre, l'image devient une figure avec légende et crédit. */ -}}
+{{- $dest := .Destination -}}
+{{- $src := $dest -}}
+{{- if not (findRE `^(https?:)?//` $dest) -}}
+  {{- with .PageInner.Resources.GetMatch $dest -}}
+    {{- if in (slice "jpeg" "png") .MediaType.SubType -}}
+      {{- if gt .Width 1400 -}}{{- $src = (.Resize "1400x q82").RelPermalink -}}{{- else -}}{{- $src = .RelPermalink -}}{{- end -}}
+    {{- else -}}{{- $src = .RelPermalink -}}{{- end -}}
+  {{- else -}}{{- $src = $dest | relURL -}}{{- end -}}
+{{- end -}}
+{{- $parts := split (.Title | default "") " | " -}}
+{{- $legende := "" -}}{{- $credit := "" -}}
+{{- if gt (len $parts) 1 -}}
+  {{- $legende = index $parts 0 -}}{{- $credit = delimit (after 1 $parts) " | " -}}
+{{- else if hasPrefix (index $parts 0) "©" -}}
+  {{- $credit = index $parts 0 -}}
+{{- else -}}
+  {{- $legende = index $parts 0 -}}
+{{- end -}}
+{{- if or $legende $credit -}}
+<figure class="photo"><img src="{{ $src }}" alt="{{ .Text }}" loading="lazy"><figcaption>{{ with $legende }}<span class="legende">{{ . }}</span>{{ end }}{{ with $credit }} <span class="credit">{{ . }}</span>{{ end }}</figcaption></figure>
+{{- else -}}
+<img src="{{ $src }}" alt="{{ .Text }}" loading="lazy">
+{{- end -}}

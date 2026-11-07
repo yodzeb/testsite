@@ -2,7 +2,7 @@
 <script>document.documentElement.className += ' js'</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 {{- $title := cond .IsHome site.Title (printf "%s · %s" .Title site.Title) }}
-{{- $desc := .Description | default .Params.description | default (cond .IsPage .Summary "" | plainify | truncate 160) | default site.Params.description }}
+{{- $desc := .Params.chapo | default .Description | default (cond .IsPage .Summary "" | plainify | truncate 160) | default site.Params.description }}
 <title>{{ $title }}</title>
 <meta name="description" content="{{ $desc }}">
 <link rel="canonical" href="{{ .Permalink }}">
