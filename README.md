@@ -2,7 +2,11 @@
 
 Site statique en français, généré avec [Hugo](https://gohugo.io) et publié sur GitHub Pages par GitHub Actions. Tout le contenu s'écrit en Markdown : il n'y a rien à compiler soi-même.
 
-## Comment modifier le site
+## Éditeur graphique (recommandé)
+
+Un éditeur local permet de tout gérer sans toucher aux fichiers : articles, réalisations, images, menu, aperçu et publication. Lancez `Lancer-editeur.bat` (Windows), `lancer-editeur.command` (macOS) ou `Lancer-editeur.ps1` (PowerShell). Détails : [tools/editor/README.md](tools/editor/README.md).
+
+## Comment modifier le site (à la main)
 
 Chaque modification se fait en éditant un fichier, directement sur github.com (bouton ✏️) ou en local, puis en validant (commit) sur la branche `main`. Le site est reconstruit et publié en 1 à 2 minutes.
 

@@ -1,0 +1,38 @@
+# Éditeur du site
+
+Application locale (Python + Flask) pour gérer le site sans toucher aux fichiers : articles, réalisations, pages, menu, images, aperçu et publication (Git intégré).
+
+## Démarrage
+
+Prérequis : **Python 3.9 ou plus** et **Git** installés sur l'ordinateur.
+
+| Système | Lancement |
+| --- | --- |
+| Windows | double-clic sur `Lancer-editeur.bat`, ou clic droit sur `Lancer-editeur.ps1` → « Exécuter avec PowerShell » |
+| macOS | double-clic sur `lancer-editeur.command` |
+| Linux | `./lancer-editeur.command` ou `python3 tools/editor/run.py` |
+
+Au premier lancement, l'éditeur installe ses composants (1 à 2 minutes, connexion Internet nécessaire). Ensuite, il démarre en quelques secondes et ouvre le navigateur sur une adresse du type `http://127.0.0.1:5173/`. **Laissez la fenêtre noire ouverte** pendant que vous travaillez ; fermez-la pour quitter.
+
+L'éditeur n'est accessible que depuis votre ordinateur.
+
+## Utilisation
+
+- **Articles / Réalisations** : « + Nouvel·le » crée un brouillon. Le formulaire à gauche contient titre, date, résumé, tags, image de couverture ; le texte s'écrit à droite en Markdown avec l'aperçu en direct. `Ctrl+S` (ou `Cmd+S`) enregistre.
+- **Images** : glissez-les dans la zone « Images » ou dans le texte, ou collez-les depuis le presse-papiers. L'éditeur les range à côté de l'article, réduit les trop grandes photos (2400 px maximum) et demande une description (accessibilité). Boutons : *Insérer* dans le texte, *Couverture*, supprimer.
+- **Brouillon** : décochez « Brouillon » pour que l'article soit publié.
+- **Pages** : accueil, À propos, mentions légales, etc.
+- **Menu et réglages** : nom du site, e-mail, réseaux sociaux, ordre et liens du menu.
+- **Aperçu du site complet** : construit le vrai site avec Hugo et l'ouvre dans un nouvel onglet (brouillons inclus). Hugo est **téléchargé automatiquement** la première fois s'il n'est pas installé (dans `.tools/`, jamais envoyé sur GitHub).
+- **Publier** : voir la liste des fichiers modifiés, saisir une description et cliquer sur « Publier sur le site » (enregistre les modifications et les envoie sur GitHub ; le site est en ligne 1 à 2 minutes plus tard). « Récupérer les changements en ligne » met à jour votre copie si le dépôt a été modifié ailleurs.
+
+## Première publication : identité et connexion GitHub
+
+1. À la première publication, l'éditeur demande votre **nom et e-mail** (simple signature des modifications).
+2. L'envoi sur GitHub demande d'être connecté·e : avec Git pour Windows ou macOS, une fenêtre de connexion GitHub s'ouvre au premier envoi. Le dépôt doit avoir été cloné en **HTTPS** (`https://github.com/…`) ou avec une clé SSH configurée.
+
+## Pour les développeurs
+
+- Code : `app.py` (API), `static/` (interface). Les champs des formulaires se définissent dans `COLLECTIONS` en haut de `app.py`.
+- Les contenus sont de simples fichiers Markdown : l'éditeur et l'édition à la main sont interchangeables.
+- Version de Hugo téléchargée automatiquement : `HUGO_VERSION` dans `app.py` (à garder identique à `.github/workflows/pages.yml`).

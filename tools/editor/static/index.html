@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="token" content="__TOKEN__">
+  <title>Éditeur du site</title>
+  <link rel="stylesheet" href="/static/editor.css">
+</head>
+<body>
+  <aside class="side">
+    <h1>Éditeur du site</h1>
+    <nav id="nav">
+      <button data-view="blog">Articles</button>
+      <button data-view="book">Réalisations</button>
+      <button data-view="pages">Pages</button>
+      <button data-view="settings">Menu et réglages</button>
+      <button data-view="publish">Publier <span id="badge" class="badge" hidden></span></button>
+    </nav>
+    <button id="btn-preview" class="ghost">Aperçu du site complet</button>
+    <p class="hint">Les modifications sont enregistrées sur votre ordinateur. Elles ne sont en ligne qu'après « Publier ».</p>
+  </aside>
+  <main id="main"></main>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="/static/editor.js"></script>
+</body>
+</html>

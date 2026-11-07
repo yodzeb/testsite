@@ -3,3 +3,6 @@ resources/
 .hugo_build.lock
 node_modules/
 .tools/
+tools/editor/.preview/
+tools/editor/.venv/
+__pycache__/
